@@ -1,7 +1,5 @@
 # 设计模式
-明天开始整理
+> 抓住本质，理解思想，举一反三
 
-![hhh](https://github.com/PlusFlyCat/HomePage/blob/main/IMG/PlusFlyCat.jpg)
-
-
+## 1. 概念
 
