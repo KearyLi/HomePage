@@ -128,9 +128,9 @@ public class OffNoveIBook extends NoveIBook {
 }
 ```
 
-## 5. 创建型模式（5种）
+## 5. 创建型（5种）
 
-> 就是创建管理实例的不同方式和操作
+> 创建管理实例的不同方式和操作
 
 ### 5.1 单例模式
 
@@ -152,7 +152,6 @@ public class Singleton {
         return singleton_instance;
     }
 }
-//----------------
 //懒汉式
 public class Singleton {
     private static Singleton singleton_instance = null;
@@ -173,7 +172,7 @@ public class Singleton {
 //优点：减少内存和系统开销，创建只创建一次，在内存中也只有一份。
 //缺点：构造函数都被私有了,无法拓展子类。
 //注意：使用单例得注意有状态单例和无状态单例，有状态单例会在分布式系统中存在多份实例，还有序列化的问题。
-//----------------
+
 //懒加载更有运行效率的方式，加“双检锁”
 public class Singleton {
     private static volatile Singleton singleton_instance = null;
@@ -206,20 +205,17 @@ public class Singleton {
 public interface Factory {
     public Product create();
 }
-//----------------
 public interface Product {
     public void grow();
 
     public void harvest();
 }
-//----------------
 public class ConcreteFactory implements Factory {
     //工厂生产产品
     public Product create() {
         return new ConcreteProduct();
     }
 }
-//----------------
 public class ConcreteProduct implements Product {
     public void grow() {
         //增长
@@ -229,7 +225,6 @@ public class ConcreteProduct implements Product {
         //行为
     }
 }
-//----------------
 public class ClientDemo {
     public static void main(String[] args) {
         ConcreteFactory concreteFactory = new ConcreteFactory();
@@ -300,7 +295,285 @@ public class ClientDemo {
 
 > 产品本身只有属性，产品的操作放在建造者那处理，对了，建造者由导演控制那些操作
 
+![]( ../IMG/Build.png)
 
+```java
+//产品抽象类
+public abstract class Product {
+    private String name;
+    private String type;
+    //省略get,set方法
+}
+//具体产品，但是还没建造好，得由建造者来建造
+public class ProductA extends Product {
+    private String a;
+    public Product(String a){
+        this.a = a;
+    }
+    public String getA(){
+        return a
+    }
+}
+//建造者接口
+public interface ProductBuilder {
+    void buildName();
+    void buildType();
+}
+//建造者对产品做的事情
+public class ProductBuildImp extends ProductBuilder {
+    private ProductA productA = new ProductA("A-12号")
+    void buildName() {
+        productA.setName("飞机")
+    }
+    void buildType() {
+        productA.setType("民用")
+    }
+}
+//导演控制建造者的动作，封装内部操作
+public class Director{
+    ProductBuilder product;
+    public ProductA constructA() {
+        product = new ProductBuildImp();
+        product.buildName();
+        product.buildType();
+        return product;
+    }
+}
+//优点：可以封装内部组成和操作
+//建造者独立，易于扩展，常用在产品执行方法顺序不同产生结果不同时，还有建造者操作顺序不同产生不同结果，这时候用建造者就很合适
+//也叫生成器模式，将一个复杂对象的构建与其表示分类，使得同样的构建过程可以创建不同的产品
+```
+
+### 5.5 原型模式
+
+> clone原型的对象来进行不同的处理，比new对象效率高，因为这是直接克隆一份内存二进制流
+
+![](../IMG/prototype.png)
+
+```java
+public interface Product extends Cloneable {
+    //克隆方法
+    Prototype clone();
+}
+
+public class ConcreteProduct implements Product {
+    public Product clone() {
+        try {
+            Product p = (Product) super.clone();
+            p.setParts(this.parts.clone());
+            return p;
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+}
+
+public class Client {
+    public Product operation(Product example) {
+        // 得到example的副本来使用
+        Product p = example.clone();
+        return p;
+    }
+}
+//原型模式比创建对象性能好，它是直接克隆内存对象的二进制流得到一份，规避了构造方法，省了初始化对象里面值的步骤
+//就像设计师辛苦用木板(类)雕刻出一个模子(对象)，然后就可以用这个模子去快速印出花纹，这就是原型模式的意思，不用再重复用木板雕刻模子。
+//浅克隆和深克隆的问题，如果ConcreteProduct类中有一个引用变量，那普通的clone就是浅克隆，克隆出的几个产品用的都是相同引用，所以这时就得用深克隆，在克隆出新产品后再在这个新产品对象中再克隆这个引用的对象。
+```
+
+## 6. 结构型（7种）
+
+> 通过继承或组合类和对象形成更大的结构，来适应更高层次逻辑需求
+
+### 6.1 代理模式
+
+> 为其他对象提供一种代理以控制对这个对象的访问。代理类可以在目标对象做的事情前后做一些事情，本身的真实角色就是被代理类有自己的业务操作，代理类就是在被代理类的基础上做另外的操作。
+
+![](../IMG/Proxy.png)
+
+```java
+    public interface Subject {
+        //定义一个请求方法
+        public void request();
+    }
+    public class RealSubject implements Subject {
+        public void request() {
+            // 业务逻辑处理
+        }
+    }
+    public class ProxySubject implements Subject {
+        private Subject subject;
+        public ProxySubject(Subject subject) {
+            this.subject = subject;
+        }
+        // 实现请求方法
+        public void request() {
+            this.beforeRequest();
+            subject.request();
+            this.afterRequest();
+        }
+        // 请求前的操作
+        private void beforeRequest() {
+            // 预处理
+        }
+        // 请求后的操作
+        private void afterRequest() {
+            // 善后处理
+        }
+    }
+//代理还可以分为远程代理、虚拟代理、保护代理、缓存代理等
+//优点就是不影响真实业务的前提下间接做别的操作，比如安全，日志；提高扩展性
+```
+
+### 6.2 装饰模式
+
+> 利用继承来给具体构件增加另外的功能操作。其实和代理模式差不多，只是这个有继承关系的参与
+
+![](../IMG/Decorator.png)
+
+```java
+public interface Component {
+    public void request();
+}
+public class ConcreteComponent implements Component {
+    public void request() {
+        //业务代码
+        System.out.println("模式");
+    }
+}
+public abstract class Decorator implements Component {
+    private Component component = null;
+
+    public Decorator(Component component) {
+        this.component = component;
+    }
+
+    public void request() {
+        this.component.request();
+    }
+}
+public class ConcreteDecorator extends Decorator {
+    public ConcreteDecorator(Component component) {
+        super(component);
+    }
+
+    //定义自己的方法
+    private void method() {
+        System.out.println("修饰");
+    }
+
+    //重写operation方法
+    public void request() {
+        this.method();
+        super.request();
+    }
+}
+//使用
+public class Client {
+    public static void main(String args[]) {
+        Component component = new ConcreteComponent();
+        //进行装饰
+        component = new ConcreteDecorator(component);
+        component.request();
+    }
+}//输出：装饰模式
+//这个比代理模式好就是装饰子类可以有多个，可以扩展不同类，从而扩展不同功能
+```
+
+### 6.3 适配器模式
+
+> 前提是当一个对象或类的接口不能匹配用户所期待的接口时，用适配器，将一个接口或类转换为另一个接口或类，其实就是在实现接口时重写的那个方法中用super调用适配器类的父类的方法。也就是用适配器实现接口方法去执行原来的继承类中的方法，实现适配两个没有关系类的效果
+
+![](../IMG/Adaper.png)
+
+```java
+public class Adaptee {
+    //原有业务处理
+    public void specificRequest() {
+    }
+}
+public interface Target {
+    public void request();
+}
+public class Adapter extends Adaptee implements Target {
+    public void request() {//适配Target接口
+        super.specificRequest();
+    }
+}
+//使用
+public class Client {
+    public static void main(String args[]) {
+        //适配器模式应用
+        Target target = new Adapter();
+        target.request();
+    }
+}
+```
+
+### 6.4 组合模式
+
+> 用对象组成树型结构，主要解决含有树形结构的问题，比如树枝叶子，公司职位树，文件系统
+
+![](../IMG/Composite.png)
+
+```java
+//定义抽象构件接口
+public interface Component {
+    public void operation();
+}
+//定义树枝构件
+public class Composite implements Component {
+    // 构件容器
+    private ArrayList<Component> componentList = new ArrayList<Component>();
+    // 添加构件
+    public void add(Component component) {
+        this.componentList.add(component);
+    }
+    // 删除构件
+    public void remove(Component component) {
+        this.componentList.remove(component);
+    }
+    // 获取子构件
+    public ArrayList<Component> getChild() {
+        return this.componentList;
+    }
+    public void operation() {
+        // 业务逻辑代码
+    }
+}
+//定义叶子构件
+public class Leaf implements Component {
+    public void operation() {
+        // 业务逻辑代码
+    }
+}
+//使用
+public class Client {
+    public static void main(String args[]) {
+        //创建一个根节点
+        Composite root = new Composite();
+        root.operation();
+        //创建树枝节点
+        Composite branch = new Composite();
+        //创建叶子节点
+        Leaf leaf = new Leaf();
+        //构建树形结构
+        root.add(branch);
+        branch.add(leaf);
+    }
+    //遍历树（递归）
+    public static void display(Composite root) {
+        for (Component c : root.getChild()) {
+            if (c instanceof Leaf) {//如果节点类型是叶子节点
+                c.operation();
+            } else {//树枝节点
+                c.operation();
+                display((Composite) c);//递归调用
+            }
+        }
+    }
+}
+```
 
 
 
