@@ -5,7 +5,7 @@
 
 设计模式思考<br>问：感觉有的设计模式差不多啊？<br/>答：不对<br>问：
 
-
+[TOC]
 
 ## 1. 概念
 
@@ -575,9 +575,162 @@ public class Client {
 }
 ```
 
+### 6.5 桥梁模式
 
+> 将抽象和实现解耦，两个维度可以自己扩展，从而扩展更大的功能版图；实现扩展性、灵活性
 
+![](../IMG/Bridge.png)
 
+```java
+//实现化角色
+public interface Implementor {
+    //方法的实现化声明
+    public void operationImp();
+}
+
+//具体实现化角色
+public class ConcreteImplementor implements Implementor {
+    //方法的实现化实现
+    public void operationImp() {
+        // 业务处理代码
+    }
+}
+//抽象化角色
+public abstrac Abstraction {
+    //定义对实现化角色的引用
+    private Implementor imp;
+
+    public Abstraction(Implementor imp) {
+        this.imp = imp;
+    }
+
+    //业务方法
+    public void operation() {
+        //其他操作
+        this.imp.operationImp();
+    }
+}
+
+//修正抽象化角色
+public class RefinedAbstraction extends Abstraction {
+    public RefinedAbstraction(Implementor imp) {
+        super(imp);
+    }
+    //修正父类的方法
+    public void operation() {
+        super.operation();
+    }
+}
+
+//使用
+public class Client {
+    public static void main(String args[]) {
+        // 定义一个实现化角色
+        Implementor imp = new ConcreteImplementor();
+        // 定义一个抽象化角色
+        Abstraction abs = new RefinedAbstraction(imp);
+        // 执行
+        abs.operation();
+    }
+}
+//使用场景：当抽象化角色和实现化角色有关系，而且不互相影响，就是二者可以单独变化而不受对方约束，桥梁模式主要就是将桥两边的抽象化角色和实现化角色整合成一个构件
+```
+
+### 6.6 外观模式
+
+> 有多个子系统(子类)需要有一个代表(外观)来控制操作，然后如果要启动子系统(执行里面动作)就直接找代表就行
+
+![](../IMG/Facade.png)
+
+```java
+public class Client {
+    public static void main(String args[]) {
+        // 定义一个外观角色
+        Facade face = new Facade();
+        // 执行
+        face.methodA();
+        face.methodB();
+        face.methodC();
+    }
+}
+public class Facade {//充当包装类角色
+    //被委托的对象
+    private ClassA a = new ClassA();  //也可以不用在这实例化的，和在外面一个道理
+    private ClassB b = new ClassB();
+    private ClassC c = new ClassC();
+
+    //提供外界的方法
+    public void methodA() {
+        a.methodA();
+    }
+    public void methodB() {
+        b.methodB();
+    }
+    public void methodC() {
+        c.methodC();
+    }
+}
+public class ClassA {
+    public void methodA() {
+        //A业务
+    }
+}
+public class ClassB {
+    public void methodB() {
+        //B业务
+    }
+}
+public class ClassC {
+    public void methodC() {
+        //C业务
+    }
+}
+//应用：傻瓜相机一键操作，省去买菜洗菜炒菜做饭环节直接去饭店
+//内繁外简，简化操作，降低客户端和子系统的依赖，实现低耦合
+```
+
+### 6.7 享元模式
+
+> 元就是池子里面的，元是不重复的，可以复用的，比如五子棋盘上的黑白棋子
+
+![](../IMG/Flyweight.png)
+
+```java
+public interface Flyweight {
+    // 业务方法
+    public abstract void operation(String extrinsicState);
+}
+public class ConcreteFlyweight implements Flyweight {
+    private String intrinsicState;// 内部状态
+
+    ConcreteFlyweight(String intrinsicState) {
+        this.intrinsicState = intrinsicState;
+    }
+    @Override
+    public void operation(String extrinsicState) {
+        System.out.println("内部状态：" + intrinsicState
+                + "，外部状态：" + extrinsicState);
+    }
+}
+//享元工厂
+public class FlyweightFactory {
+    private static Map<String, Flyweight> pool = new HashMap<String, Flyweight>();
+
+    private FlyweightFactory() {
+    } // 私有构造方法
+
+    public static Flyweight getFlyweight(String intrinsicState) {
+        Flyweight flyweight = pool.get(intrinsicState);
+        if (flyweight == null) {
+            flyweight = new ConcreteFlyweight(intrinsicState);
+            pool.put(intrinsicState, flyweight);
+        }
+        return flyweight;
+    }
+}
+//仔细看上面代码意义就知道，享元工厂会去检查池子里面是否有那个对象，用内部状态判断，如果没有就创建，反之不创建。
+//应用：五子棋盘，黑白棋就是两个元，这两个元对象在一个池子pool里面，使用时就复用这两个元对象，使用就是把它放在棋盘上，在外部添加坐标，规则等，从而组成一个棋盘
+```
 
 
 
