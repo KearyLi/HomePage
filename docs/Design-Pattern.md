@@ -5,7 +5,7 @@
 
 设计模式思考<br>问：感觉有的设计模式差不多啊？<br/>答：不对<br>问：
 
-[1. 概念](1. 概念)<br>[2. 背景](#2.背景)
+[1. 概念](1.概念)<br>[2. 背景](#2.背景)
 
 ## 1. 概念
 
@@ -733,6 +733,147 @@ public class FlyweightFactory {
 //仔细看上面代码意义就知道，享元工厂会去检查池子里面是否有那个对象，用内部状态判断，如果没有就创建，反之不创建。
 //应用：五子棋盘，黑白棋就是两个元，这两个元对象在一个池子pool里面，使用时就复用这两个元对象，使用就是把它放在棋盘上，在外部添加坐标，规则等，从而组成一个棋盘
 ```
+
+## 7. 行为型（11种）
+
+> 对不同的对象之间划分责任和算法的抽象化  
+
+### 7.1 模板方法模式
+
+> 父类抽象类中有基本方法和模板方法，基本方法由子类继承实现，模板方法相当于封装核心处理，子类来扩展可变的部分，符合开闭原则
+
+![](../IMG/Template.png)
+
+```java
+public abstract class AbstractClass {
+    //基本方法
+    protected abstract void operation();
+    //模板方法
+    public void templateMethod() {
+        //调用基本方法，完成相关的逻辑
+        this.operation();
+    }
+}
+public class ConcreteClass extends AbstractClass {
+    // 实现基本业务方法
+    protected void operation() {
+        // 业务逻辑
+    }
+}
+//使用
+public class Client {
+    public static void main(String args[]) {
+        AbstractClass ac = new ConcreteClass();
+        //调用模板方法
+        ac.templateMethod();
+    }
+}
+//多个具体类实现模板类，不同的实现抽象方法，从而让顶级逻辑的实现不同
+```
+
+### 7.2 命令模式
+
+> 调用者类和实际执行者类没有关系，但是调用者类可以用那个命令接口的实现类作为媒介来命令控制实际执行者。  解耦和，其实意思就是调用类用一个命令类来让接受者干啥，然后这个命令类可以有多个，让多个实现子类实现命令接口就行
+
+![](../IMG/Command.png)
+
+```java
+public interface Command {
+    //执行命令的方法
+    public void execute();
+}
+public class ConcreteCommand implements Command {
+    private Receiver receiver;
+    public ConcreteCommand(Receiver receiver) {
+        this.receiver = receiver;
+    }
+    // 执行方法
+    public void execute() {
+        this.receiver.action();
+    }
+}
+public class Receiver {
+    // 行动方法
+    public void action() {
+        System.out.println("执行动作");
+    }
+}
+public class Invoker {
+    private Command command;
+    // 接收命令
+    public void setCommand(Command command) {
+        this.command = command;
+    }
+    //执行命令
+    public void action() {
+        this.command.execute();
+    }
+}
+public class Client {
+    public static void main(String args[]) {
+        // 调用者
+        Invoker invoker = new Invoker();
+        // 接收者
+        Receiver receiver = new Receiver();
+        // 定义一个发送给接收者的命令
+        Command command = new ConcreteCommand(receiver);
+        // 执行
+        invoker.setCommand(command);
+        invoker.action();
+    }
+}
+```
+
+### 7.3 责任链模式
+
+> 抽象处理者持有具体处理者的引用，多个具体处理者排成一条链，有序地排队处理，直到处理完成
+
+![](../IMG/Chain.png)
+
+```java
+public abstract class Handler {
+    private Handler successor;
+    //处理方法
+    public abstract void handleRequest();
+    public Handler getSuccessor() {
+        return successor;
+    }
+    public void setSuccessor(Handler successor) {
+        this.successor = successor;
+    }
+}
+public class ConcreteHandler extends Handler {//注意，一般继承都可以有多个子类，意味着可以有多种处理方式
+    // 处理请求
+    public void handleRequest() {
+        if (getSuccessor() != null) {
+            System.out.println("请求传递给" + getSuccessor());
+            getSuccessor().handleRequest();
+        } else {
+            System.out.println("请求处理");
+        }
+    }
+}
+public class Client {
+    public static void main(String args[]) {
+        Handler h1 = new ConcreteHandler();
+        Handler h2 = new ConcreteHandler();
+        h1.setSuccessor(h2);//将链子连接起来
+        h1.handleRequest();//一直延伸到最后一个具体处理者
+    }
+}
+//优点就是请求和处理分开，代理类把请求发送下去，处理的过程就不管了，直到返回结果
+//缺点就是性能不太好
+```
+
+### 7.4 策略模式
+
+> 抽象策略类和多个策略子类，每个策略子类都有各自的策略算法，这些策略还可以相互替换迭代器   集合用得多，遍历集合对象中的对象的
+
+
+
+
+
+
 
 
 
