@@ -5,6 +5,8 @@
 
 设计模式思考<br>问：感觉有的设计模式差不多啊？<br/>答：不对<br>问：原型模式用return this行吗？<br/>答：肯定不行啊，那不还是返回自己的引用，也没clone新的一份。
 
+慢慢地发现每种设计模式都是最大限度地体现六大设计原则。
+
 
 
 ## 1. 概念
@@ -383,7 +385,7 @@ public class Client {
 //就像设计师辛苦用木板(类)雕刻出一个模子(对象)，然后就可以用这个模子去快速印出花纹，这就是原型模式的意思，不用再重复用木板雕刻模子。
 //浅克隆和深克隆的问题，如果ConcreteProduct类中有一个引用变量，那普通的clone就是浅克隆，克隆出的几个产品用的都是相同引用，所以这时就得用深克隆，在克隆出新产品后再在这个新产品对象中再克隆这个引用的对象。
 //深克隆的解决方法还有另一种就是实现Serializable通过序列化来处理clone
-//缺点就是每个类都得写一份clone的
+//缺点就是每个类都得写一份clone的方法
 ```
 
 ## 6. 结构型（7种）
@@ -452,7 +454,6 @@ public abstract class Decorator implements Component {
     public Decorator(Component component) {
         this.component = component;
     }
-
     public void request() {
         this.component.request();
     }
@@ -461,12 +462,10 @@ public class ConcreteDecorator extends Decorator {
     public ConcreteDecorator(Component component) {
         super(component);
     }
-
     //定义自己的方法
     private void method() {
-        System.out.println("修饰");
+        System.out.println("修饰-");
     }
-
     //重写operation方法
     public void request() {
         this.method();
@@ -481,8 +480,8 @@ public class Client {
         component = new ConcreteDecorator(component);
         component.request();
     }
-}//输出：装饰模式
-//这个比代理模式好就是装饰子类可以有多个，可以扩展不同类，从而扩展不同功能
+}//输出：装饰-模式
+//这个比代理模式好就是装饰子类可以有多个，可以扩展不同类，从而扩展不同功能；这样的方式就比单纯继承的灵活性好
 ```
 
 ### 6.3 适配器模式
