@@ -998,7 +998,7 @@ public class ConcreteAggregate implements Aggregate {
 
 
 
-
+![](../IMG/MyThink.png)
 
 
 
