@@ -3,7 +3,7 @@
 >
 > 结合经验与书籍总结《设计模式》《秒懂设计模式》《大话设计模式》
 
-设计模式思考<br>问：感觉有的设计模式差不多啊？<br/>答：不对<br>问：
+设计模式思考<br>问：感觉有的设计模式差不多啊？<br/>答：不对<br>问：原型模式用return this行吗？<br/>答：肯定不行啊，那不还是返回自己的引用，也没clone新的一份。
 
 
 
@@ -199,7 +199,7 @@ public class Singleton {
 
 ### 5.2 工厂方法模式
 
-> 将产品对象的创建放到子类工厂中进行控制，目的就是隐藏产品创建对象的过程
+> 将产品对象的创建放到子类工厂中进行控制，目的就是封装创建产品对象的过程
 
 ![](../IMG/Factory.png)
 
@@ -212,17 +212,16 @@ public interface Product {
 
     public void harvest();
 }
-public class ConcreteFactory implements Factory {
+public class ConcreteFactory implements Factory {//自由扩展工厂不同操作
     //工厂生产产品
     public Product create() {
         return new ConcreteProduct();
     }
 }
-public class ConcreteProduct implements Product {
+public class ConcreteProduct implements Product {//自由扩展不同产品种类
     public void grow() {
         //增长
     }
-
     public void harvest() {
         //行为
     }
@@ -231,18 +230,19 @@ public class ClientDemo {
     public static void main(String[] args) {
         ConcreteFactory concreteFactory = new ConcreteFactory();
         Product product1 = concreteFactory.create();
-        product1.grow();//可以不用这个，工厂类也可以封装调用产品的业务
+        product1.grow();//可以不用这个，工厂类也可以封装调用产品的业务方法
     }
 }
 //工厂方法模式就是在别的地方封装一下new对象的过程，现在将实例化封装在工厂中，也是为了系统的可扩展性和耦合性
 //优点：封装，可扩展
+//唯一的缺点就是产品类的增加同时也得增加对应的工厂类，就这有点麻烦，其实还行
 ```
 
 
 
 ### 5.3 抽象工厂模式
 
-> 和工厂模式不同的是抽象工厂模式有多个产品，处理时是对产品组进行对象创建，处理
+> 和工厂模式不同的是抽象工厂模式有多个产品，处理时是封装对产品组进行对象创建，处理
 
 ![](/home/hang/code/github_file/HomePage/IMG/AbstractFactory.png)
 
@@ -318,11 +318,11 @@ public class ProductA extends Product {
 }
 //建造者接口
 public interface ProductBuilder {
-    void buildName();
-    void buildType();
+    void buildName();//抽象出产品的组成
+    void buildType();//抽象出产品的组成
 }
 //建造者对产品做的事情
-public class ProductBuildImp extends ProductBuilder {
+public class ProductBuildImp extends ProductBuilder {//可以有多个建造者
     private ProductA productA = new ProductA("A-12号")
     void buildName() {
         productA.setName("飞机")
@@ -334,7 +334,7 @@ public class ProductBuildImp extends ProductBuilder {
 //导演控制建造者的动作，封装内部操作
 public class Director{
     ProductBuilder product;
-    public ProductA constructA() {
+    public Product constructA() {
         product = new ProductBuildImp();
         product.buildName();
         product.buildType();
@@ -342,7 +342,7 @@ public class Director{
     }
 }
 //优点：可以封装内部组成和操作
-//建造者独立，易于扩展，常用在产品执行方法顺序不同产生结果不同时，还有建造者操作顺序不同产生不同结果，这时候用建造者就很合适
+//建造者独立，易于扩展，常用在产品执行方法顺序不同产生结果不同时，还有建造者操作顺序不同产生不同结果，这时候用建造者就很合适，所以建造者侧重于装配零件和装配顺序
 //也叫生成器模式，将一个复杂对象的构建与其表示分类，使得同样的构建过程可以创建不同的产品
 ```
 
@@ -354,15 +354,16 @@ public class Director{
 
 ```java
 public interface Product extends Cloneable {
-    //克隆方法
-    Prototype clone();
+    //重写父clone方法，说明实现类可以被clone
+    Product clone();
 }
 
 public class ConcreteProduct implements Product {
+    private Parts parts;
     public Product clone() {
         try {
             Product p = (Product) super.clone();
-            p.setParts(this.parts.clone());
+            p.setParts(this.parts.clone());//这个是手动用深克隆给引用对象重新弄一份，不然还是那一份
             return p;
         } catch (CloneNotSupportedException e) {
             e.printStackTrace();
@@ -372,7 +373,7 @@ public class ConcreteProduct implements Product {
 }
 
 public class Client {
-    public Product operation(Product example) {
+    public Product cloneOperation(Product example) {
         // 得到example的副本来使用
         Product p = example.clone();
         return p;
@@ -381,6 +382,8 @@ public class Client {
 //原型模式比创建对象性能好，它是直接克隆内存对象的二进制流得到一份，规避了构造方法，省了初始化对象里面值的步骤
 //就像设计师辛苦用木板(类)雕刻出一个模子(对象)，然后就可以用这个模子去快速印出花纹，这就是原型模式的意思，不用再重复用木板雕刻模子。
 //浅克隆和深克隆的问题，如果ConcreteProduct类中有一个引用变量，那普通的clone就是浅克隆，克隆出的几个产品用的都是相同引用，所以这时就得用深克隆，在克隆出新产品后再在这个新产品对象中再克隆这个引用的对象。
+//深克隆的解决方法还有另一种就是实现Serializable通过序列化来处理clone
+//缺点就是每个类都得写一份clone的
 ```
 
 ## 6. 结构型（7种）
