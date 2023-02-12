@@ -5,7 +5,7 @@
 
 设计模式思考<br>问：感觉有的设计模式差不多啊？<br/>答：不对<br>问：
 
-[1. 概念](1.概念)<br>[2. 背景](#2.背景)
+
 
 ## 1. 概念
 
@@ -20,8 +20,6 @@
 - 继承就是避免出现重复代码，子类有父类的东西，子类可以重写父类的东西，子类可以扩展父类的东西；
 
 - 多态就是父类的引用可以指向本类对象或者子类的对象。面向接口编程的重要性在这可以体现了。
-
-<a name="2.背景"></a>
 
 ## 2. 背景
 
@@ -132,11 +130,11 @@ public class OffNoveIBook extends NoveIBook {
 
 ## 5. 创建型（5种）
 
-> 创建管理实例的不同方式和操作
+> 创建管理实例的不同方式和操作，对创建对象的过程进行封装
 
 ### 5.1 单例模式
 
-> 懒汉式、饿汉式，构造方法私有，饿汉式加synchronized
+> 懒汉式、饿汉式，构造方法私有，获取实例加synchronized
 
 ![Singleton](../IMG/Singleton.png)
 
@@ -175,7 +173,7 @@ public class Singleton {
 //缺点：构造函数都被私有了,无法拓展子类。
 //注意：使用单例得注意有状态单例和无状态单例，有状态单例会在分布式系统中存在多份实例，还有序列化的问题。
 
-//懒加载更有运行效率的方式，加“双检锁”
+//懒加载更好运行效率的方式，加“双检锁”
 public class Singleton {
     private static volatile Singleton singleton_instance = null;
 
@@ -193,6 +191,8 @@ public class Singleton {
         return singleton_instance;
     }
 }
+//饿汉式优点就是保证唯一性，但是在系统启动时加载时间会比较长
+//懒汉式优点就是系统启动快，实例延迟加载，但是得用“双检锁”来解决多线程访问的问题
 ```
 
 
@@ -231,7 +231,7 @@ public class ClientDemo {
     public static void main(String[] args) {
         ConcreteFactory concreteFactory = new ConcreteFactory();
         Product product1 = concreteFactory.create();
-        product1.grow();
+        product1.grow();//可以不用这个，工厂类也可以封装调用产品的业务
     }
 }
 //工厂方法模式就是在别的地方封装一下new对象的过程，现在将实例化封装在工厂中，也是为了系统的可扩展性和耦合性
@@ -295,7 +295,7 @@ public class ClientDemo {
 
 ### 5.4 建造者模式
 
-> 产品本身只有属性，产品的操作放在建造者那处理，对了，建造者由导演控制那些操作
+> 产品本身只有属性，产品的组成和操作放在建造者那处理，对了，建造者由导演控制那些操作
 
 ![]( ../IMG/Build.png)
 
@@ -385,7 +385,7 @@ public class Client {
 
 ## 6. 结构型（7种）
 
-> 通过继承或组合类和对象形成更大的结构，来适应更高层次逻辑需求
+> 通过继承或组合让类和对象形成更大的结构，来适应更高层次逻辑需求
 
 ### 6.1 代理模式
 
@@ -867,7 +867,158 @@ public class Client {
 
 ### 7.4 策略模式
 
-> 抽象策略类和多个策略子类，每个策略子类都有各自的策略算法，这些策略还可以相互替换迭代器   集合用得多，遍历集合对象中的对象的
+> 抽象策略类和多个策略子类，每个策略子类都有各自的策略算法，这些策略还可以相互替换，实现了定义算法和使用算法分离
+
+![](../IMG/Strategy.png)
+
+```java
+//抽象策略类
+public abstract class Strategy {
+    //策略方法
+    public abstract void strategyInterface();
+}
+//具体策略类
+public class ConcreteStrategy extends Strategy {  //这里就可以实现多种策略然后在Context中处理
+    // 实现策略方法
+    public void strategyInterface() {
+        // 具体算法
+    }
+}
+//环境角色
+public class Context {
+    private Strategy strategy = null;
+    //构造函数
+    public Context(Strategy strategy) {
+        this.strategy = strategy;
+    }
+    //调用策略方法
+    public void contextInterface() {
+        this.strategy.strategyInterface();
+    }
+}
+//优点就是可以独立设计算法，用继承还可以复用父类的处理
+//缺点就是上下文必须知道设计算法的不同区别
+//常用在算法组选择，算法组切换
+```
+
+### 7.5 迭代器模式
+
+> 创建一个对象来访问集合中元素，这个对象就是迭代器，可以说是一个工具类
+
+![](../IMG/Iterator.png)
+
+```java
+public interface Iterator {
+    public Object next();
+    public boolean hasNext();
+}
+public class ConcreteIterator implements Iterator {
+    private ConcreteAggregate agg;
+    private int index = 0;
+    private int size = 0;
+    public ConcreteIterator(ConcreteAggregate agg) {
+        this.agg = agg;
+        size = agg.size();
+        index = 0;
+    }
+    // 是否有下一个元素，即还没遍历结束
+    public boolean hasNext() {
+        return index < size;
+    }
+    //返回下一个元素
+    public Object next() {
+        if (index < size) {
+            return agg.getElement(index++);
+        } else {
+            return null;
+        }
+    }
+}
+
+public interface Aggregate {
+    public void add(Object obj);
+    public Iterator creatIterator();
+}
+public class ConcreteAggregate implements Aggregate {
+    private Vector vector = new Vector();
+    public void add(Object object) {
+        this.vector.add(object);
+    }
+    public Object getElement(int index) {
+        if (index < vector.size()) {
+            return vector.get(index);
+        } else {
+            return null;
+        }
+    }
+    public int size() {
+        return vector.size();
+    }
+    public Iterator creatIterator() {
+        return new ConcreteIterator(this);
+    }
+}
+public class ConcreteAggregate implements Aggregate {
+    private Vector vector = new Vector();
+    public void add(Object object) {
+        this.vector.add(object);
+    }
+    public Object getElement(int index) {
+        if (index < vector.size()) {
+            return vector.get(index);
+        } else {
+            return null;
+        }
+    }
+    public int size() {
+        return vector.size();
+    }
+    public Iterator creatIterator() {
+        return new ConcreteIterator(this);
+    }
+}
+//就是一个遍历集合的类
+```
+
+### 7.6 中介模式
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
