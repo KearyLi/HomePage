@@ -1015,7 +1015,9 @@ public class ConcreteAggregate implements Aggregate {
 
 
 
+每日一词：
 
+慢慢来才走得更
 
 
 
