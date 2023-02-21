@@ -200,7 +200,63 @@ synchronized修饰代码块其实就是上面两个的意思，一个用synchron
 
 > 线程产生的竞态、内存可见性问题用上面竞争机制处理；但是线程也有更厉害的用法
 
- 
+### 3.1 场景
+
+- 生产者消费者协作模式 —— 生产者往队列中放数据，消费者往队列中取数据，队列空了后消费者停，队列满了生产者停，这个停就是用wait()/notify()或其他来操作线程实现
+- 同时开始 —— 使用某种方式让多个线程一起开始运行
+- 等待结束(主从协作) —— 主任务必须等待子任务结束后才能结束
+- 异步结果 —— 这个现在有点理解不了，好像跟Future返回结果有关
+- 集合点 —— 多个线程都处理到一定程度后在某个地方等待着做一件事，交换数据结果啥的，然后再各自处理各自的
+
+### 3.2 wait()/notify()的使用与原理：
+
+首先使用wait和notify的那一块得用synchronized同步，因为wait后会释放锁，如果不同步哪来的锁释放； wait执行后当先线程进入条件队列，然后等待时间结束或者notify通知可以出去就可以出去了，但是wait等待的不止notify，还有锁和变量的改变；
+
+```java
+public class Main extends Thread {
+        private volatile boolean fire = false;
+        @Override
+        public void run() {
+            System.out.println("前");
+            try {
+                synchronized (this) {
+                    System.out.println("会不会有两次");//答案是不会，因为虽然wait从条件队列中出来后会获取锁和判断变量，但不会继续执行这个，这个思想很有特点，想想它的处理就知道了
+                    while(! fire) {
+                        //可以想象一个输出在这，但wait被唤醒后不会走这，这个思想很奇妙，只可意会不可言传
+                        wait();
+                    }
+                }
+                System.out.println("fired");
+            } catch(InterruptedException e) {
+            }
+            System.out.println("后");
+        }
+        public synchronized void fire() {
+            System.out.println("notify得到锁");
+            this.fire = true; //这个点很有意思，当把这注了后会继续让线程进入条件队列中，fired和同步后两个不会打印； 注了后线程继续保持在条件队列中，程序还在处于运行状态
+            notify();
+            System.out.println("notify释放锁");
+        }
+        public static void main(String[] args) throws InterruptedException {
+            Main waitThread = new Main();
+            waitThread.start();
+            Thread.sleep(3000);
+            System.out.println("fire");
+            waitThread.fire();
+        }
+}
+//结果
+前
+fire
+notify得到锁
+notify释放锁
+fired
+后
+```
+
+### 3.3 各场景实现
+
+
 
  
 
