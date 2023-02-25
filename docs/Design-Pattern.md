@@ -67,6 +67,10 @@
 
 - 开闭原则：对扩展开放，对修改关闭，尽可能少地修改源代码。上面的原则其实都是为了开闭原则服务的，都是工具。
 
+![](../IMG/MyThink.png)
+
+设计原则小示例：
+
 ![](../IMG/openOff.png)
 
 ```java
@@ -221,7 +225,7 @@ public class Singleton {
 
 > 将产品对象的创建放到子类工厂中进行控制，目的就是封装创建产品对象的过程
 >
-> 将一个类的实例化延迟到子类
+> 将一个类的实例化延迟到子类，每个产品都有一个单独的工厂
 
 ![](../IMG/Factory.png)
 
@@ -446,7 +450,7 @@ public class Client {
         // 实现请求方法
         public void request() {
             this.beforeRequest();
-            subject.request();//控制
+            subject.request();//控制对这个对象的访问
             this.afterRequest();
         }
         // 请求前的操作
@@ -500,7 +504,7 @@ public class ConcreteDecorator extends Decorator {
     }
     //定义自己的方法
     private void method() {
-        System.out.println("修饰-");
+        System.out.println("修饰-");//增加功能、职责
     }
     //重写operation方法
     public void request() {
@@ -550,7 +554,7 @@ public class Client {
     }
 }
 //扩展类功能，增加类功能，改装类功能
-//适配器模式的结构其实不是固定上面那种，只要是一个适配器类能将两个不匹配的东西连接起来，就可以说属于适配器模式
+//适配器模式的结构其实不是固定上面那种，只要一个适配器类能将两个不匹配的东西连接起来，就可以说属于适配器模式
 ```
 
 ### 6.4 组合模式
@@ -782,7 +786,7 @@ public class FlyweightFactory {
 
 ## 7. 行为型（11种）
 
-> 对不同的对象之间划分责任和算法的抽象化  
+> 对不同的对象之间划分责任和算法的抽象化，主要关注对象的行为
 
 ### 7.1 模板方法模式
 
@@ -795,12 +799,12 @@ public abstract class AbstractClass {
     //基本方法
     protected abstract void operation();
     //模板方法
-    public void templateMethod() {
+    public void templateMethod() {//封装不变的部分，子类扩展可变的部分
         //调用基本方法，完成相关的逻辑
         this.operation();
     }
 }
-public class ConcreteClass extends AbstractClass {
+public class ConcreteClass extends AbstractClass {//不同子类有不同实现
     // 实现基本业务方法
     protected void operation() {
         // 业务逻辑
@@ -820,7 +824,7 @@ public class Client {
 
 ### 7.2 命令模式
 
-> 调用者类和实际执行者类没有关系，但是调用者类可以用那个命令接口的实现类作为媒介来命令控制实际执行者。  解耦和，其实意思就是调用类用一个命令类来让接受者干啥，然后这个命令类可以有多个，让多个实现子类实现命令接口就行
+> 调用者类和实际执行者类没有关系(迪米特原则)，但是调用者类可以用那个命令接口的实现类作为媒介来命令控制实际执行者。  解耦和，其实意思就是调用类用一个命令类来让接受者干啥，然后这个命令类可以有多个，让多个实现子类实现命令接口就行
 
 ![](../IMG/Command.png)
 
@@ -869,6 +873,8 @@ public class Client {
         invoker.action();
     }
 }
+
+//适用场景：回调、存储状态分辨撤销、操作日志记录等
 ```
 
 ### 7.3 责任链模式
@@ -910,6 +916,7 @@ public class Client {
 }
 //优点就是请求和处理分开，代理类把请求发送下去，处理的过程就不管了，直到返回结果
 //缺点就是性能不太好
+//适用场景就是传递请求、业务流处理、文件一级一级地审批
 ```
 
 ### 7.4 策略模式
@@ -935,7 +942,7 @@ public class ConcreteStrategy extends Strategy {  //这里就可以实现多种�
 public class Context {
     private Strategy strategy = null;
     //构造函数
-    public Context(Strategy strategy) {
+    public Context(Strategy strategy) {//放不同的处理方式的对象
         this.strategy = strategy;
     }
     //调用策略方法
@@ -943,14 +950,14 @@ public class Context {
         this.strategy.strategyInterface();
     }
 }
-//优点就是可以独立设计算法，用继承还可以复用父类的处理
-//缺点就是上下文必须知道设计算法的不同区别
+//优点就是可以独立设计算法，用继承还可以复用父类的处理，而且还避免了多重条件转移语句
+//缺点就是使用哪种策略必须知道每种设计算法的不同区别
 //常用在算法组选择，算法组切换
 ```
 
 ### 7.5 迭代器模式
 
-> 创建一个对象来访问集合中元素，这个对象就是迭代器，可以说是一个工具类
+> 创建一个对象来访问容器集合中元素，这个对象就是迭代器，可以说是一个工具类
 
 ![](../IMG/Iterator.png)
 
@@ -1005,41 +1012,360 @@ public class ConcreteAggregate implements Aggregate {
         return new ConcreteIterator(this);
     }
 }
-public class ConcreteAggregate implements Aggregate {
-    private Vector vector = new Vector();
-    public void add(Object object) {
-        this.vector.add(object);
-    }
-    public Object getElement(int index) {
-        if (index < vector.size()) {
-            return vector.get(index);
-        } else {
-            return null;
-        }
-    }
-    public int size() {
-        return vector.size();
-    }
-    public Iterator creatIterator() {
-        return new ConcreteIterator(this);
-    }
-}
 //就是一个遍历集合的类
 ```
 
 ### 7.6 中介模式
 
+> 每个同事是单独的个体，中介有全局观，可以把每个单独的同事联系起来。就像中介和别人有联系，但同事和同事之间不知道，同事之间只会干好自己的事和只知道中介在哪，别人找中介来让这几个同事干一件事。将类与类之间行为关系转化位一对多，多对一的关系
+>
+> 就像房产中介和卖家买家
+
+![](../IMG/Mediator.png)
+
+```java
+//抽象中介者
+public abstract class Mediator {
+    //中介者模式的业务逻辑方法
+    public abstract void colleagueChanged(Colleague c);
+}
+
+//具体中介者
+public class ConcreteMediator extends Mediator {
+    private ConcreteColleague1 c1;
+    private ConcreteColleague2 c2;
+
+    //中介者模式的业务逻辑方法
+    public void colleagueChanged(Colleague c) {
+        c1.action();
+        c2.action();
+    }
+
+    //工厂方法，创建同事对象
+    public void createConcreteMediator() {
+        c1 = new ConcreteColleague1(this);
+        c2 = new ConcreteColleague2(this);
+    }
+
+    //获取同事对象
+    public ConcreteColleague1 getC1() {
+        return c1;
+    }
+
+    public ConcreteColleague2 getC2() {
+        return c2;
+    }
+}
+
+//抽象同事类
+public abstract class Colleague {
+    private Mediator mediator;
+
+    //构造函数
+    public Colleague(Mediator m) {//每增加一个同事就在中介那去报道
+        this.mediator = m;
+    }
+
+    //getter和setter方法
+    public Mediator getMediator() {
+        return mediator;
+    }
+
+    public void setMediator(Mediator mediator) {
+        this.mediator = mediator;
+    }
+
+    //抽象行动方法，由子类实现
+    public abstract void action();
+
+    //业务方法，调用此方法改变对象的内部状态
+    public void change() {
+        this.mediator.colleagueChanged(this);
+    }
+}
+
+//具体同事类
+public class ConcreteColleague1 extends Colleague {
+    //构造函数
+    public ConcreteColleague1(Mediator m) {
+        super(m);
+    }
+
+    //实现具体行动方法
+    public void action() {
+        System.out.println("这是同事1的行动！");
+    }
+}
+
+public class ConcreteColleague2 extends Colleague {
+    //构造函数
+    public ConcreteColleague2(Mediator m) {
+        super(m);
+    }
+
+    //实现具体行动方法
+    public void action() {
+        System.out.println("这是同事2的行动！");
+    }
+}
+//好处就是避免同事类之间的耦合，单个同事对象只知道中介者，不知晓旁边有同事；将同事的行为和同事之间的协作分离
+//缺点确实有点多，可能将中介者变成超级类，过于复杂难以复用，每增加同事类都得在中介者那登记
+//用法，比如给单身男和单身女配对
+```
+
+### -------
+
+### 7.7 观察者模式
+
+> 被观察者类接口有观察者接口的引用，被观察者类会添加每个观察者类，这样当被观察者类发生变化后就依次执行观察者里面的方法，立即通知观察者，这个就像Android里面的LiveData
+>
+> 这个也同上可以是一对多的关系，一对一的关系比较少，要用就用一对多，不然多浪费这个模式
+
+![](../IMG/Observer.png)
+
+```java
+public interface Subject {
+    //登记一个新的观察者
+    public void attach(Observer obs);
+    //删除一个登记过的观察者
+    public void detach(Observer obs);
+    //通知所有登记过的观察者对象
+    public void notifyObserver();
+}
+public class ConcreteSubject implements Subject {
+    private Vector<Observer> obsVector = new Vector<Observer>();
+    //登记一个新的观察者
+    public void attach(Observer obs) {
+        obsVector.add(obs);
+    }
+    //删除一个登记过的观察者
+    public void detach(Observer obs) {
+        obsVector.remove(obs);
+    }
+    //通知所有登记过的观察者对象
+    public void notifyObserver() {
+        for (Observer e : obsVector) {
+            e.update();
+        }
+    }
+    //返回观察者集合的Enumeration对象
+    public Enumeration<Observer> observers() {
+        return obsVector.elements();
+    }
+    //业务方法，改变状态
+    public void change() {
+        this.notifyObserver();
+    }
+}
+public interface Observer {
+    //更新方法
+    public void update();
+}
+public class ConcreteObserver implements Observer {
+    //实现更新方法
+    public void update() {
+        System.out.println("收到通知，并进行处理！");
+    }
+}
+public class Client {
+    public static void main(String args[]) {
+        //创建一个主题对象（被观察者）
+        ConcreteSubject subject = new ConcreteSubject();
+        //创建一个观察者
+        Observer obs = new ConcreteObserver();//可以有很多和观察者
+        //登记观察者
+        subject.attach(obs);
+        //改变状态
+        subject.change();
+    }
+}
+//这个挺简单，就是被观察者类状态变化后就执行某个方法，这个方法里面遍历执行每个观察者，以此来通知观察者有所行动
+//优点就是状态改变一次就更新多个观察者，类似Android中的广播和livedata
+//这个可以实现责任链模式，但两者不同，这个消息是变化的，责任链那个消息传递是固定的
+//缺点就是观察者太多性能也有影响，而且被观察者通知次数多了容易造成系统崩溃
+```
+
+### 7.8 备忘录模式
+
+> 快照模式，备份状态，当需要保存发起人的状态时，就用负责人对象创建一个备忘录对象在中间来保存这个状态
+>
+> 不破坏封装性又能快照
+
+![](../IMG/Memo.png)
+
+```java
+//需要保存状态的原始类
+public class Original {
+    //内部状态
+    private String state = "";
+    public String getState() {
+        return state;
+    }
+    public void setState(String state) {
+        this.state = state;
+    }
+    //创建备忘录
+    public Memo createMemo() {
+        return new Memo(this.state);
+    }
+    //恢复一个备忘录
+    public void restoreMemo(Memo memo) {
+        this.setState(memo.getState());
+    }
+}
+//备忘录
+public class Memo {
+    //发起人的内部状态
+    private String state;
+
+    //构造函数传递参数
+    public Memo(String state) {
+        this.state = state;
+    }
+
+    public String getState() {
+        return state;
+    }
+
+    public void setState(String state) {
+        this.state = state;
+    }
+}
+//负责管理备忘录
+public class MemoManage {
+    // 备忘录对象组
+    private Memo memo;
+
+    public Memo getMemo() {
+        return memento;
+    }
+
+    public void setMemo(Memo memo) {
+        this.memo = memo;
+    }
+}
+public class Client {
+    public static void main(String args[]) {
+        //定义原始类
+        Original org = new Original();
+        //定义负责人
+        MemoManage mm = new MemoManage();
+        //创建一个备忘录来管理
+        mm.setMemo(org.createMemo());
+        //恢复备忘录数据到原始类中
+        org.restoreMemo(mm.getMemo());
+    }
+}
+//使用场景：需要保存和恢复数据、保存副本用于其他用途、游戏存档读档；所以以后ubuntu一定得把权限保存一份，权限改错真的麻烦
+//使用备忘录时就得注意备忘录的生命周期，然后就是备忘录创建多了就得新建对象，这对性能也有影响
+//优点就是可恢复数据，缺点就是保存数据创建备忘录影响性能
+
+```
+
+### 7.9 访问者模式
+
+> 对一个元素对象上进行一些对这个对象的操作，这些操作放在访问者类中，这样就不污染元素类对象
+>
+> 这个模式很有意思，它这样把操作自己的东西放到别的对象里面
+
+![](../IMG/Visitor.png)
+
+```java
+public abstract class Hardware {
+    String type; // 型号
+    public Hardware(String type) {
+        this.type = type;
+    }
+    public String getType() {
+        return type;
+    }
+    // 运转
+    public abstract void run();
+    // 接受计算机访问者
+    public abstract void accept(ComputerVisitor computerVisitor);
+}
+public class CPU extends Hardware {
+    public CPU(String type) {
+        super(type);
+    }
+    @Override
+    public void run() {
+        System.out.println("型号为" + type + "的CPU正在运转");
+    }
+    @Override
+    public void accept(ComputerVisitor computerVisitor) {
+        computerVisitor.vistCPU(this);
+    }
+}
+public class Harddisk extends Hardware {
+    public Harddisk(String type) {
+        super(type);
+    }
+    @Override
+    public void run() {
+        System.out.println("型号为" + type + "的硬盘正在运转");
+    }
+    @Override
+    public void accept(ComputerVisitor computerVisitor) {
+        computerVisitor.vistHarddisk(this);
+    }
+}
+public class TypeVisitor implements ComputerVisitor {//将有关的操作集中起来
+    @Override
+    public void vistCPU(CPU cpu) {
+        System.out.println("CPU型号：" + cpu.getType());
+    }
+    @Override
+    public void vistHarddisk(Harddisk harddisk) {
+        System.out.println("硬盘型号：" + harddisk.getType());
+    }
+}
+public class RunVisitor implements ComputerVisitor {
+    @Override
+    public void vistCPU(CPU cpu) {
+        cpu.run();
+    }
+    @Override
+    public void vistHarddisk(Harddisk harddisk) {
+        harddisk.run();
+    }
+}
+public class Computer {
+    private Hardware cpu;
+    private Hardware harddisk;
+    public Computer() {
+        this.cpu = new CPU("Intel Core i7-620");
+        this.harddisk = new Harddisk("Seagate 500G 7200转");
+    }
+    public void accept(ComputerVisitor computerVisitor) {
+        cpu.accept(computerVisitor);
+        harddisk.accept(computerVisitor);
+    }
+}
+public class Client {
+    public static void main(String[] args) {
+        Computer computer = new Computer();
+        ComputerVisitor typeVisitor = new TypeVisitor();
+        ComputerVisitor runVisitor = new RunVisitor();
+        computer.accept(typeVisitor);
+        System.out.println("-----------------");
+        computer.accept(runVisitor);
+    }
+}
+/*CPU型号：Intel Core i7-620
+硬盘型号：Seagate 500G 7200转
+-----------------
+型号为Intel Core i7-620的CPU正在运转
+型号为Seagate 500G 7200转的硬盘正在运转*/
+//看main里面的操作，它直接用对象执行对象里面的方法来操作自己，神奇
+//好处就是访问者对象可以集中操作元素对象、访问者里面在访问过程中可以保存状态他用
+//缺点显而易见就是挺复杂的，增加一个元素就得在访问者里面增加相应的操作；还破坏了封装，元素对象全部暴露出给访问者了
+//还破坏了依赖倒置，元素类依赖了具体类，而不是抽象类
+```
 
 
 
 
-
-
-
-
-
-
-![](../IMG/MyThink.png)
 
 
 
