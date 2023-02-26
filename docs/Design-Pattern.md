@@ -1361,13 +1361,154 @@ public class Client {
 //好处就是访问者对象可以集中操作元素对象、访问者里面在访问过程中可以保存状态他用
 //缺点显而易见就是挺复杂的，增加一个元素就得在访问者里面增加相应的操作；还破坏了封装，元素对象全部暴露出给访问者了
 //还破坏了依赖倒置，元素类依赖了具体类，而不是抽象类
+//这里有个静态分派和动态分派的问题，上面用的是动态分派，就是重写和重载的不同解决方案，以后再来仔细研究研究！！
+//见 https://zhuanlan.zhihu.com/p/259864836#:~:text=Kevin)%3B%0A%20%20%20%20%7D%0A%7D-,%E8%BF%90%E8%A1%8C%E7%A8%8B%E5%BA%8F%EF%BC%8C%E8%BE%93%E5%87%BA%E5%A6%82%E4%B8%8B%EF%BC%9A,-Aurora%20gets%20a%20lobster
 ```
 
+### 7.10 状态模式
 
+> 用于对象的行为依赖于它所处的状态，即状态改变行为，多种状态可以用一个抽象状态类生成多个子类实现，然后把这些状态封装在一个系统对象里面管理，状态切换操作也放进去，这样当状态改变就改变行为
+>
+> 多态用得好
 
+![](../IMG/State.png)
 
+```java
+//抽象状态
+public abstract class State {
+    // 定义一个环境角色
+    protected Context context;
+    // 设置环境
+    public void setContext(Context context) {
+        this.context = context;
+    }
 
+    // 抽象行为
+    public abstract void handle();
+}
+//具体状态1
+public class ConcreteState1 extends State {
+    // 状态1的行为逻辑处理
+    public void handle() {
+        System.out.println("行为1的逻辑处理");
+    }
+}
+//具体状态2
+public class ConcreteState2 extends State {
+    // 状态2的行为逻辑处理
+    public void handle() {
+        System.out.println("行为2的逻辑处理");
+    }
+}
+//环境角色
+public class Context {
+    // 定义状态
+    public static State STATE1 = new ConcreteState1();
+    public static State STATE2 = new ConcreteState2();
+    // 当前状态
+    private State currentState;
 
+    // 获取当前状态
+    public State getCurrentState() {
+        return currentState;
+    }
+    // 设置当前状态
+    public void setCurrentState(State currentState) {
+        this.currentState = currentState;
+        // 设置状态中的环境
+        currentState.setContext(this);
+    }
+    // 行为委托
+    public void handle1() {
+        //切换到状态1
+        this.setCurrentState(STATE1);//修改当前状态指向哪个对象，然后下面执行这个对象中方法
+        this.currentState.handle();
+    }
+    public void handle2() {
+        //切换到状态2
+        this.setCurrentState(STATE2);//修改当前状态指向哪个对象，然后下面执行这个对象中方法
+        this.currentState.handle();
+    }
+}
+//应用程序
+public class Client {
+    public static void main(String args[]) {
+        //定义环境角色
+        Context context = new Context();
+        //执行行为
+        context.handle1();
+        context.handle2();
+    }
+}
+//优点就是结构简单，而且封装用得好，很容易地能切换状态对象；代替了多条件分支语句
+//缺点就是每个状态就意味着一个类，子类会变多，上下文对象会变得比较臃肿
+//android里面的不同模式下的不同状态就用可以这个来简化状态改变行为的处理过程
+```
+
+### 7.11 解释器模式
+
+> 用解释器搭配一种文法(新语言到计算机能识别的东西的映射语句)，然后解释处理新语言
+
+![](../IMG/Interpreter.png)
+
+```java
+public interface ArithmeticExpression {
+    int interpret(Variables variables);
+}
+public class Variable implements ArithmeticExpression {
+    @Override
+    public int interpret(Variables variables) {//得到文法映射表中的对应值
+        return variables.get(this);
+    }
+}
+public class Variables {
+    Map<Variable, Integer> v = new HashMap<>();
+    public void put(Variable variable, int value) {//文法里面的映射表
+        v.put(variable, value);
+    }
+    public int get(Variable variable) {
+        return v.get(variable);
+    }
+}
+public class Subtract implements ArithmeticExpression {//文法的规则
+    ArithmeticExpression left;
+    ArithmeticExpression right;
+    public Subtract(ArithmeticExpression left, ArithmeticExpression right) {
+        this.left = left;
+        this.right = right;
+    }
+    @Override
+    public int interpret(Variables variables) {
+        return left.interpret(variables) - right.interpret(variables);
+    }
+}
+public class Plus implements ArithmeticExpression {//文法的规则
+    ArithmeticExpression left;
+    ArithmeticExpression right;
+    public Plus(ArithmeticExpression left, ArithmeticExpression right) {
+        this.left = left;
+        this.right = right;
+    }
+    @Override
+    public int interpret(Variables variables) {
+        return left.interpret(variables) + right.interpret(variables);
+    }
+}
+public class Client {
+    public static void main(String[] args) throws InterruptedException {
+        Variables variables = new Variables();
+        Variable x = new Variable();
+        Variable y = new Variable();
+        variables.put(x, 10);
+        variables.put(y, 20);
+        ArithmeticExpression subtract = new Plus(new Subtract(y, x), y);
+        //new Subtract(y, x)这个仔细看就是里面的left，然后又去执行这个对象中的interpret返回计算结果
+        System.out.println(subtract.interpret(variables));//30
+    }
+}
+//缺点就是复杂，容易产生超级类
+//使用场景就是语法解释分析转换成计算机能识别处理的数据，还有就是对不同日志进行解释输出
+```
 
 
 
