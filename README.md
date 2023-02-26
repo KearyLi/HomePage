@@ -5,13 +5,13 @@
 
 ## 内功
 
-[设计模式](https://github.com/PlusFlyCat/HomePage/blob/main/docs/Design-Pattern.md)
+- [设计模式](https://github.com/PlusFlyCat/HomePage/blob/main/docs/Design-Pattern.md)
 
-数据结构
+- 数据结构
 
-算法
+- 算法
 
-[并发](https://github.com/PlusFlyCat/HomePage/blob/main/docs/High-Concurrency.md)
+- [并发](https://github.com/PlusFlyCat/HomePage/blob/main/docs/High-Concurrency.md)
 
 ## android
 
