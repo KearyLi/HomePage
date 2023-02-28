@@ -225,7 +225,9 @@ public class Singleton {
 
     public Singleton getInstance() {
         if (singleton_instance == null) {
-            synchronized (Singleton.class) {//在这加锁就是为了运行效率，如果一个线程创建了实例就不用走这了，不用让线程等待，直接用之前线程创建的实例
+            //在这加锁就是为了运行效率，如果一个线程创建了实例就不用走这了，不用让线程等待，
+            //直接用之前线程创建的实例
+            synchronized (Singleton.class) {
                 if (singleton_instance == null) {
                     singleton_instance = new Singleton();
                 }

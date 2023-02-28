@@ -4,12 +4,12 @@
 
 > 首先并发是由线程产生的
 >
-> 线程的创建 - 线程出现的问题 - 用竞争机制解决 - 又产生新问题 - 注意避免
+> 线程状态：创建 -- start就绪 -- 得时间片运行 -- blocked阻塞 -- waiting等待 -- 终止
 
 ### 1.1 线程创建方式
 
 ```java
- //两种创建线程的方式
+ //三种两种创建线程的方式
  //1.继承Thread
  public class HelloThread extends Thread {
      @Override
@@ -44,6 +44,27 @@ sleep方法、yield方法、join方法、过时方法等，其实就是Thread类
 还是Thread的实例方法，知道这些就可以灵活调用了
 */
  
+//用FutureTask创建线程执行有返回值
+public class CallerTask implements Callable<String> {
+    @Override
+    public String call() {
+        return "hello";
+    }
+    public static void main(String[] args) throws InterruptedException {
+        // 创建异步任务,这个任务会返回结果，不像上面两个似的只会做事情
+        FutureTask<String> futureTask  = new FutureTask<>(new CallerTask());
+        //启动线程
+        new Thread(futureTask).start();
+        try {
+            //等待任务执行完毕，并返回结果
+            String result = futureTask.get();
+            System.out.println(result);
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
 ```
 
 ### 1.2 线程产生问题
@@ -66,7 +87,7 @@ sleep方法、yield方法、join方法、过时方法等，其实就是Thread类
 
 优点就是能充分利用CPU内存磁盘网络资源，在某些业务上使用线程也能优化用户体验，提高应用细节功能
 
-缺点除了上面两个还有就是线程创建，调度，上下文切换都消耗系统资源；操作系统会为线程创建栈和程序计数器，调用和上下文切换会不断恢复删除CPU寄存器中的值，很可能导致缓存值失效。  为甚后面的缺点不放在上面列出，因为这是硬件层面的问题，解决不了，只能预防
+缺点除了上面两个还有就是线程创建，调度，上下文切换都消耗系统资源；操作系统会为线程创建栈和程序计数器，调用和上下文切换会不断恢复删除CPU寄存器中的值，很可能导致缓存值失效。  为甚后面的缺点不放在上面列出，因为这是硬件层面的问题，解决不了，只能预防，反正就是线程这个功能你爱用不用，用就有好处，但是你得解决出现的问题，不用就老老实实地用主线程，少麻烦事做
 
 这里考虑创建线程数量时得考虑时CPU密集型还是IO密集型，因为上个项目里面处理大量数据就只有一个线程处理数据
 
@@ -222,7 +243,7 @@ synchronized修饰代码块其实就是上面两个的意思，一个用synchron
 
 > 线程产生的竞态、内存可见性问题用上面竞争机制处理；但是线程也有更厉害的用法
 
-场景
+### 3.1 协作场景
 
 - 生产者消费者协作模式 —— 生产者往队列中放数据，消费者往队列中取数据，队列空了后消费者停，队列满了生产者停，这个停就是用wait()/notify()或其他来操作线程实现
 - 同时开始 —— 使用某种方式让多个线程一起开始运行
@@ -230,9 +251,11 @@ synchronized修饰代码块其实就是上面两个的意思，一个用synchron
 - 异步结果 —— 这个现在有点理解不了，好像跟Future返回结果有关
 - 集合点 —— 多个线程都处理到一定程度后在某个地方等待着做一件事，交换数据结果啥的，然后再各自处理各自的
 
-wait()/notify()的使用与原理：
+### 3.2 wait()/notify()
 
-首先使用wait和notify的那一块得用synchronized同步，因为wait后会释放锁，如果不同步哪来的锁释放； wait执行后当先线程进入条件队列，然后等待时间结束或者notify通知可以出去就可以出去了，但是wait等待的不止notify，还有锁和变量的改变；
+分清锁、等待队列、条件队列的区别：锁就是synchronized保护机制，等待队列就是线程执行synchronized方法首先得获取对象的锁，如果获取不了自身进入等待队列中；条件队列是线程执行wait方法后进入条件队列阻塞
+
+wait()/notify()的使用与原理：首先使用wait和notify的那一块得用synchronized同步，因为wait后会释放锁，如果不同步哪来的锁释放； wait执行后让线程进入条件队列等待，然后等待时间结束或者notify通知就可以出去了，但是wait等待的不止notify，还有锁和协作变量的改变；
 
 ```java
 public class Main extends Thread {
@@ -244,7 +267,7 @@ public class Main extends Thread {
                 synchronized (this) {
                     System.out.println("会不会有两次");//答案是不会，因为虽然wait从条件队列中出来后会获取锁和判断变量，但不会继续执行这个，这个思想很有特点，想想它的处理就知道了
                     while(! fire) {
-                        //可以想象一个输出在这，但wait被唤醒后不会走这，这个思想很奇妙，只可意会不可言传
+                        //可以想象一个输出在这，但wait被唤醒后不会走这，它等待一个协作变量，这个思想很奇妙，只可意会不可言传
                         wait();
                     }
                 }
@@ -255,8 +278,9 @@ public class Main extends Thread {
         }
         public synchronized void fire() {
             System.out.println("notify得到锁");
-            this.fire = true; //这个点很有意思，当把这注了后会继续让线程进入条件队列中，fired和同步后两个不会打印； 注了后线程继续保持在条件队列中，程序还在处于运行状态
-            notify();
+            this.fire = true; //这个点很有意思，当把这注了后会继续让线程进入条件队列中，
+            			//fired和同步后两个不会打印； 注了后线程继续保持在条件队列中，程序还在处于运行状态
+            notify();//别的线程调用本对象的notify方法来将条件队列中等待的线程通知出来
             System.out.println("notify释放锁");
         }
         public static void main(String[] args) throws InterruptedException {
@@ -276,25 +300,19 @@ fired
 后
 ```
 
-各场景实现
+### 3.3 各场景实现
 
-生产者消费者模式 —— 生产者线程类、消费者线程类、消息队列类，然后生产者线程调用队列类里面的put方法，如果判断出队列类中满了就调用wait()，然后当前生产者线程就进入条件队列中，并且释放锁；这时消费者拿到锁去调用take方法取消息，如果判断出队列类中空了就调用wait，自己这个线程也进入条件队列中，调用notifyAll()将条件队列中的生产者线程通知出来，然后生产者就又能放消息了；其实想想这个流程里面两方生产和消费的执行间隔次数是不固定的，由操作系统分配，但是能完美地实现消息队列的使用
+生产者消费者模式 —— 有生产者线程类、消费者线程类、消息队列类；然后生产者线程调用队列类里面的put方法，如果判断出队列类中满了就调用wait()，然后当前生产者线程就进入条件队列中，并且释放锁；这时消费者拿到锁去调用take方法取消息，如果判断出队列类中空了就调用wait，自己这个线程也进入条件队列中，调用notifyAll()将条件队列中的生产者线程通知出来，然后生产者就又能放消息了；其实想想这个流程里面两方生产和消费的执行间隔次数是不固定的，由操作系统分配，但是能完美地实现消息队列的使用
 
 更多的还是使用下面java已有的阻塞队列来给线程操作
 
-接口BlockingQueue和BlockingDeque
-
-基于数组的实现类ArrayBlockingQueue
-
-基于链表的实现类LinkedBlockingQueue和LinkedBlockingDeque
-
-基于堆的实现类PriorityBlockingQueue
+接口BlockingQueue和BlockingDeque；基于数组的实现类ArrayBlockingQueue；<br>基于链表的实现类LinkedBlockingQueue和LinkedBlockingDeque；基于堆的实现类PriorityBlockingQueue；
 
 同时开始 —— 多个子线程去调用准备方法来把自己放进条件队列中等待，然后释放锁，等全部子线程都进入条件队列中等待好后，主线程sleap一段时间，然后主线程获取锁去调用开始方法，开始方法中有notifyall方法来唤醒全部子线程，这些子线程就各自把自己从wait后续的操作
 
 等待结束 —— 和同时开始相反，这个是用一个共享变量来控制，多个子线程执行对象方法来给这个变量减一，当变量等于0后调用notifyAll来通知主线程，为什么通知主线程，因为这是等待结束啊，子线程执行完后通知主线程可以结束了
 
-异步调用 —— 好像就是封装线程处理返回处理结果
+异步调用 —— 好像就是封装线程处理返回处理结果,这里搞不太懂，先放着☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆☆
 
 集合点 —— 用一个和线程数相同的共享变量来控制，每个线程进入wait前减一，如果减到0之后就notifyall,其实还是灵活运用wait和notify
 
@@ -302,9 +320,17 @@ fired
 
 ## 4. 线程的中断
 
-> 为甚要有线程中断，因为看看上面的操作，比如生产者消费者是一直运行着的，如果想要停止他们，就得中断线程；还有其他的目的，比如一些线程业务上
+> 为甚要有线程中断，因为看看上面的操作，比如生产者消费者是一直运行着的，或者一直在条件队列中，反正都是处于运行中，如果想要停止他们，就得中断线程；还有其他的目的，一些线程业务上，例如多个线程做一个任务，其中一个线程处理完成，就得把其他线程中断停掉
+>
+> 记住线程中断不是强制停止线程，只是给线程一个信号，停止还得看线程自己
 
 线程Thread有三个方法isInterrupted()、interrupte()、静态方法interrupted()
+
+```java
+public boolean isInterrupted()
+public void interrupt()
+public static boolean interrupted()
+```
 
 -  isInterrupted()返回当前线程的中断标志位是否为true
 - interrupt()中断当前线程，其实这个不是直接中断，懂吧，它只是设置线程的中断标志位true/false，然后另外两个方法得到线程的中断标志位来做某样处理，让线程退出来；记住不是真正退出
@@ -312,12 +338,12 @@ fired
 
 interrupt()方法不会让线程显式中断，它只是隐式地将中断位改变，记住这点！！但是使用它的时候在线程不同状态时发生的事情也不同，比如
 
-- RUN	这时候只会设置中断标志位为true，它没有什么用，但是可以在线程运行中检查这个标志位来判断是否做某事
-- TIME_WAITING    这时候会抛出异常，也没什么用，但是也相当于中断了，但是这时候中断标志位会被清空；但是也鞥你用抛出异常这个做某事，比如在catch中设置做个什么事也行
+- RUNNABLE	这时候只会设置中断标志位为true，它没有什么用，但是可以在线程运行时检查这个标志位来判断是否做某事
+- TIME_WAITING    这时候会抛出异常InterruptedException，也没什么用，但是也相当于中断了，但是这时候中断标志位会被清空；但是会用抛出异常然后捕获异常来做某事，比如在catch中设置做个什么处理
 - BLOCKED    这时候只会设置中断标志位为true，也没什么用，也不会线程从等待队列中弄出来啥的，但是它会设置中断标志位啊
 - NEW/TERMINATE    这时候不会有作用，什么都不会发生
 
-> 说到底Thread里面的中断方法之能设置标志位，不能真正中断线程，想要中断线程还得封装中断方法，比如Future和ExecutorService等
+> 说到底Thread里面的中断方法之能设置标志位，不能真正中断线程，可以使用这个机制来做其他操作，想要中断线程还得封装中断方法，比如使用Future和ExecutorService里面的方法来取消任务执行
 
 
 
