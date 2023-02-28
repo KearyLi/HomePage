@@ -6,6 +6,8 @@
 >
 > 线程状态：创建 -- start就绪 -- 得时间片运行 -- blocked阻塞 -- waiting等待 -- 终止
 
+<img src="../IMG/ThreadStateImg.png" style="zoom: 67%;" />
+
 ### 1.1 线程创建方式
 
 ```java
@@ -255,6 +257,8 @@ synchronized修饰代码块其实就是上面两个的意思，一个用synchron
 
 分清锁、等待队列、条件队列的区别：锁就是synchronized保护机制，等待队列就是线程执行synchronized方法首先得获取对象的锁，如果获取不了自身进入等待队列中；条件队列是线程执行wait方法后进入条件队列阻塞
 
+> 注意wait方法执行会释放之前synchronized获取的锁，如果线程获取了两个锁，就是sync里面还有一个sync，但是wait只会释放一个锁，这时候注意释放的是那个对象的锁，所以会有一个锁没释放，这时别的线程在获取这个锁会获取不到，就会阻塞
+
 wait()/notify()的使用与原理：首先使用wait和notify的那一块得用synchronized同步，因为wait后会释放锁，如果不同步哪来的锁释放； wait执行后让线程进入条件队列等待，然后等待时间结束或者notify通知就可以出去了，但是wait等待的不止notify，还有锁和协作变量的改变；
 
 ```java
@@ -266,8 +270,8 @@ public class Main extends Thread {
             try {
                 synchronized (this) {
                     System.out.println("会不会有两次");//答案是不会，因为虽然wait从条件队列中出来后会获取锁和判断变量，但不会继续执行这个，这个思想很有特点，想想它的处理就知道了
-                    while(! fire) {
-                        //可以想象一个输出在这，但wait被唤醒后不会走这，它等待一个协作变量，这个思想很奇妙，只可意会不可言传
+                    while(! fire) {//防止“虚假唤醒”，就是没发生notify通知、等待时间到、抛出异常，但是线程莫名被唤醒
+                        //这样即使被虚假唤醒后由于上面的判断，也会继续wait
                         wait();
                     }
                 }
@@ -280,7 +284,7 @@ public class Main extends Thread {
             System.out.println("notify得到锁");
             this.fire = true; //这个点很有意思，当把这注了后会继续让线程进入条件队列中，
             			//fired和同步后两个不会打印； 注了后线程继续保持在条件队列中，程序还在处于运行状态
-            notify();//别的线程调用本对象的notify方法来将条件队列中等待的线程通知出来
+            notify();//别的线程调用本对象的notify方法来将条件队列中等待的线程唤醒，只会唤醒这个对象中一个线程
             System.out.println("notify释放锁");
         }
         public static void main(String[] args) throws InterruptedException {
@@ -299,6 +303,8 @@ notify释放锁
 fired
 后
 ```
+
+最后补充一下sleep和yield的使用区别：sleep让当前线程状态变为TIME_WITING，然后不释放锁，等时间结束就继续执行；但是yield是线程主动让出CPU时间片，然后回到就绪状态等待运行
 
 ### 3.3 各场景实现
 
@@ -339,7 +345,7 @@ public static boolean interrupted()
 interrupt()方法不会让线程显式中断，它只是隐式地将中断位改变，记住这点！！但是使用它的时候在线程不同状态时发生的事情也不同，比如
 
 - RUNNABLE	这时候只会设置中断标志位为true，它没有什么用，但是可以在线程运行时检查这个标志位来判断是否做某事
-- TIME_WAITING    这时候会抛出异常InterruptedException，也没什么用，但是也相当于中断了，但是这时候中断标志位会被清空；但是会用抛出异常然后捕获异常来做某事，比如在catch中设置做个什么处理
+- TIME_WAITING/WAITING    这时候会抛出异常InterruptedException，也没什么用，但是也相当于中断了，但是这时候中断标志位会被清空；但是会用抛出异常然后捕获异常来做某事，比如在catch中设置做个什么处理
 - BLOCKED    这时候只会设置中断标志位为true，也没什么用，也不会线程从等待队列中弄出来啥的，但是它会设置中断标志位啊
 - NEW/TERMINATE    这时候不会有作用，什么都不会发生
 
