@@ -351,6 +351,84 @@ interrupt()方法不会让线程显式中断，它只是隐式地将中断位改
 
 > 说到底Thread里面的中断方法之能设置标志位，不能真正中断线程，可以使用这个机制来做其他操作，想要中断线程还得封装中断方法，比如使用Future和ExecutorService里面的方法来取消任务执行
 
+## 5. 并发工具包
+
+> java.util.concurrent.atomic高性能开发工具包，为甚高性能，就是因为里面封装volatile进行操作
+>
+> 它的出现替换了synchronized，避免了取锁和放锁上下文切换，线程阻塞等，减少系统开销；高并发专用
+
+### 5.1 原子变量和CAS
+
+![](../IMG/AtomicPackage.png)
+
+上面包里面的类就是可以以原子的方式来更新Integer、数组类型、引用类型、引用里面的字段等；轻量级操作有大作用
+
+例如AtomicInteger类里面源码：由于现在硬件层次上的支持，可以直接以最底层的方式来操作变量，原子操作更轻量级；属于乐观非阻塞，性能高效
+
+```java
+... 
+    private static final Unsafe unsafe = Unsafe.getUnsafe();
+	public final boolean compareAndSet(int expect, int update) {
+        return unsafe.compareAndSwapInt(this, valueOffset, expect, update);
+    }//之前只有这个方法是调底层的，这个类其他方法都基于这个；
+	//但是现在少调用了，好多方法都支持调底层，但我想CAS虽然是这个，但也代表所以的调用底层的方法吧？就是一个思想
+     /**
+     * Atomically increments by one the current value.
+     *
+     * @return the previous value
+     */
+    public final int getAndIncrement() {
+        return unsafe.getAndAddInt(this, valueOffset, 1);
+    }
+...
+```
+
+虽然看起来这个功能少，只能操作里面的一个变量，但是由于这个是原子操作，也可以用这个实现一个悲观非阻塞锁
+
+```java
+public class MyLock {
+    private AtomicInteger status = new AtomicInteger(0);
+    public void lock() {
+        while(! status.compareAndSet(0, 1)) {
+            Thread.yield();
+        }
+    }
+    public void unlock() {
+        status.compareAndSet(1, 0);
+    }
+}//之后就可以在线程执行中用这个类来实现锁，而且还不阻塞，高效一点
+```
+
+最后有个ABA的问题，虽然这个原子操作很棒，但是忽略了ABA的问题，就是它识别不了值被更改过，只是知道最后拿到的值是正确的，和之前值是一样的；解决办法只能再比较一个时间戳
+
+```java
+//用这个原子包中的AtomicStampedReference类里面的这个方法
+    public boolean compareAndSet(V   expectedReference,
+                                 V   newReference,
+                                 int expectedStamp,
+                                 int newStamp) {
+        Pair<V> current = pair;
+        return
+            expectedReference == current.reference &&
+            expectedStamp == current.stamp &&
+            ((newReference == current.reference &&
+              newStamp == current.stamp) ||
+             casPair(current, Pair.of(newReference, newStamp)));
+    }
+```
+
+> 总结：想安全使用计数，反正就是安全改变值就用原子变量；这个高效，乐观，非阻塞，高并发的最爱
+
+### 5.2 显式锁
+
+![LocksPackage](../IMG/LocksPackage.png)
+
+这里包中的接口和类主要就是实现一种比synchronized功能多，高效一点，可程序自由命令控制线程。这里还多了个AQS的东西，显式锁就是底层就是AQS。
+
+
+
+
+
 
 
 
