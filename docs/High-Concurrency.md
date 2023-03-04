@@ -373,25 +373,40 @@ interrupt()方法不会让线程显式中断，它只是隐式地将中断位改
 
 ## 5. 并发工具包
 
-> java.util.concurrent.atomic高性能开发工具包，为甚高性能，就是因为里面封装volatile进行操作
+> java.util.concurrent.atomic高性能并发工具包，为甚高性能，就是因为里面封装volatile进行操作
 >
 > 它的出现替换了synchronized，避免了取锁和放锁上下文切换，线程阻塞等，减少系统开销；高并发专用
+>
+> 比如只想同步一个变量就没必要使用锁，直接用这个原子变量
 
 ### 5.1 原子变量和CAS
 
 ![](../IMG/AtomicPackage.png)
 
-上面包里面的类就是可以以原子的方式来更新Integer、数组类型、引用类型、引用里面的字段等；轻量级操作有大作用
+上面包里面的类就是可以以原子的方式来更新Integer、数组类型、引用类型、引用里面的字段等；轻量级操作有大作用，用来很安全地以原子方式更新值
+
+```java
+    public static void main(String[] args) {
+        AtomicInteger atomicInteger = new AtomicInteger();
+        for (int i = 0; i < 10000; i++) {
+            new Thread(atomicInteger::incrementAndGet).start();
+        }
+        System.out.println(atomicInteger.get());
+    }//10000   线程拿到的永远是更新完成后的值
+```
+
+
 
 例如AtomicInteger类里面源码：由于现在硬件层次上的支持，可以直接以最底层的方式来操作变量，原子操作更轻量级；属于乐观非阻塞，性能高效
 
 ```java
 ... 
-    private static final Unsafe unsafe = Unsafe.getUnsafe();
+    private volatile int value;
+    private static final Unsafe unsafe = Unsafe.getUnsafe();//硬件层面的操作
 	public final boolean compareAndSet(int expect, int update) {
         return unsafe.compareAndSwapInt(this, valueOffset, expect, update);
-    }//之前只有这个方法是调底层的，这个类其他方法都基于这个；
-	//但是现在少调用了，好多方法都支持调底层，但我想CAS虽然是这个，但也代表所以的调用底层的方法吧？就是一个思想
+    }//之前只有这个方法是调底层的，这个类中其他方法都基于这个；
+	//但是现在少调用了，好多方法都支持调底层，但我想CAS虽然是这个，但也代表所以的调用底层的方法吧？我觉得其实就是一个思想
      /**
      * Atomically increments by one the current value.
      *
@@ -403,7 +418,7 @@ interrupt()方法不会让线程显式中断，它只是隐式地将中断位改
 ...
 ```
 
-虽然看起来这个功能少，只能操作里面的一个变量，但是由于这个是原子操作，也可以用这个实现一个悲观非阻塞锁
+虽然看起来这个功能少，只能操作里面的一个变量，但是由于这个是原子操作，也可以用这个实现一个乐观非阻塞锁
 
 ```java
 public class MyLock {
@@ -441,19 +456,89 @@ public class MyLock {
 
 ### 5.2 显式锁
 
+> 首先显示锁是为了解决synchronized使用的局限性，可以说是synchronized的替代方案
+
 ![LocksPackage](../IMG/LocksPackage.png)
 
-这里包中的接口和类主要就是实现一种比synchronized功能多，高效一点，可程序自由命令控制线程。这里还多了个AQS的东西，显式锁就是底层就是AQS。
+Lock接口中定义了一些方法lock()/unLock()、tryLock()等，具体实现在ReentrantLock里面
 
+- lock()unLock()：获取锁/释放锁
+- tryLock()：只有当锁在调用时是空闲的，才会获取锁
 
+- lockinterruptibly()：获取锁，除非当前线程被中断
+- tryLock(long time, TimeUnit unit)：如果锁在给定的等待时间内空闲且当前线程未被中断，则获取锁
+- newcondition()：返回一个绑定到此Lock实例的新Condition实例
 
+ReentrantLock里面使用了CAS操作，也使用了AQS，两个东西搭配操作实现这个并发工具类；看源码里就是ReentrantLock里实现确实实现了Lock里面的方法，但是实际还是使用AQS具体实现;然后呢，就是AQS里面使用了LockSupport来实现线程的状态切换，而且自身维护了一个等待队列来放线程
 
+```java
+//ReentrantLock里面的内部类
+abstract static class Sync extends AbstractQueuedSynchronizer//AQS
+static final class NonfairSync extends Sync//不公平锁,默认不公平锁
+static final class FairSync extends //Sync公平锁
 
+public void lock() {
+        sync.lock();
+}
+```
 
+> 其实可以在这说明一下LockSuport里面方法的具体含义的，但是这个由AQS封装使用，没在显式锁出现，就先放着，等后面复盘时再仔细深入
+>
+> 总结就是这里包中的接口和类主要就是比synchronized功能多，高效一点，可程序自由命令控制线程。这里还多了个AQS的东西，显式锁就是CAS和AQS和LockSuport搭配操作
 
+### 5.3 显式条件
 
+解决竞态条件    ---   实现协作机制
 
+synchronized  ----  wait()/notify()
 
+显式锁       -----         显式条件await()/signal()
+
+显式条件的使用其实和wait()/notify()一样，也是让线程进入条件队列中，释放锁，释放CPU；当被唤醒后或时间到或发生中断重新获取锁再继续处理后面的任务；注意这里最好也使用一个等待条件，就像上面的wait前面的判断，防止“虚假唤醒”
+
+显式锁搭配显式条件使用
+
+```java
+public class WaitThread extends Thread {
+    private volatile boolean fire = false;
+    private Lock lock = new ReentrantLock();
+    private Condition condition = lock.newCondition();
+    @Override
+    public void run() {
+        try {
+            lock.lock();
+            try {
+                while (!fire) {
+                    condition.await();//让这些线程进入这个显式条件的条件队列中等待，并释放锁
+                }
+            } finally {
+                lock.unlock();
+            }
+            System.out.println("fired");
+        } catch (InterruptedException e) {
+            Thread.interrupted();
+        }
+    }
+    public void fire() {
+        lock.lock();
+        try {
+            this.fire = true;
+            condition.signal();//注意这里别用notify()
+        } finally {
+            lock.unlock();
+        }
+    }
+    public static void main(String[] args) throws InterruptedException {
+        WaitThread waitThread = new WaitThread();
+        waitThread.start();
+        Thread.sleep(1000);
+        System.out.println("fire");
+        waitThread.fire();
+    }
+}//之前的生产者消费者模式就可以用这个显式锁和显式条件改进，用显式锁创建两个显式条件，一个条件队列专门放生产者线程，另一个条件队列专门放消费者线程
+```
+
+> 总结就是这个显式条件就是专门和显式锁搭配使用，这样可以使用多个条件队列
 
 
 
