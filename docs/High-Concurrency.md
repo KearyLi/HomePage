@@ -484,7 +484,7 @@ public void lock() {
 
 > 其实可以在这说明一下LockSuport里面方法的具体含义的，但是这个由AQS封装使用，没在显式锁出现，就先放着，等后面复盘时再仔细深入
 >
-> 总结就是这里包中的接口和类主要就是比synchronized功能多，高效一点，可程序自由命令控制线程。这里还多了个AQS的东西，显式锁就是CAS和AQS和LockSuport搭配操作
+> 总结就是这里包中的接口和类主要就是比synchronized功能多，高效一点，可程序地自由命令控制线程。这里还多了个AQS的东西，显式锁就是CAS和AQS和LockSuport搭配操作
 
 ### 5.3 显式条件
 
@@ -538,7 +538,118 @@ public class WaitThread extends Thread {
 }//之前的生产者消费者模式就可以用这个显式锁和显式条件改进，用显式锁创建两个显式条件，一个条件队列专门放生产者线程，另一个条件队列专门放消费者线程
 ```
 
-> 总结就是这个显式条件就是专门和显式锁搭配使用，这样可以使用多个条件队列
+> 总结就是这个显式条件就是专门和显式锁搭配使用，这样可以使用多个条件队列；然后其实显式锁还是显式条件的实际操作和功能主要是靠AQS来实现
+
+## 6. 并发容器
+
+1. **写时复制容器**
+
+![](../IMG/CopyOnWriteArrayList.png)
+
+其实这个写容器和正常List容器差不多，它同样也是实现List接口，但是这个里面它将容器的引用设置为volatile，每次获取引用就得到这个引用指向的容器空间，但是写的时候会联合显式锁ReentrantLock来给写操作加锁；所以这个写时复制适合并发读情况，写少的情况，而且如果容器体积太大也不合适，因为它写的时候是在容器副本上面写，这个容器副本得copy一份，体积太大性能有影响
+
+```java
+public class CopyOnWriteArrayList<E>
+    implements List<E>, RandomAccess, Cloneable, java.io.Serializable {    
+/** The array, accessed only via getArray/setArray. */
+    private transient volatile Object[] array;
+
+    /**
+     * Gets the array.  Non-private so as to also be accessible
+     * from CopyOnWriteArraySet class.
+     */
+    final Object[] getArray() {
+        return array;
+    }
+    public E set(int index, E element) {
+        final ReentrantLock lock = this.lock;//写使用了显式锁，读不加锁，所以读支持高并发
+        lock.lock();
+        try {
+            Object[] elements = getArray();
+            E oldValue = get(elements, index);
+
+            if (oldValue != element) {
+                int len = elements.length;
+                Object[] newElements = Arrays.copyOf(elements, len);
+                newElements[index] = element;
+                setArray(newElements);
+            } else {
+                // Not quite a no-op; ensures volatile write semantics
+                setArray(elements);
+            }
+            return oldValue;
+        } finally {
+            lock.unlock();
+        }
+    }
+```
+
+> 其实还有个CopyOnWriteArraySet，但它是在CopyOnWriteArrayList的基础上操作的，差不多，而且性能低
+>
+> 总结就是写时复制容器适合读并发，写少，容器体积不大的场景
+
+2. **并发HashMap**
+
+并发HashMap就是并发工具包中的ConcurrentHashMap，和上面两个容器一样支持高并发读，内部有很多原子操作；和以前老式同步容器相比这个不用在迭代时候加锁；而且这个不会出现死循环问题，HashMap会；
+
+这个ConcurrentHashMap的这些优点是由分段锁实现的，将容器看成一条链，然后分为很多段，然后每个段都有各自的锁，这个锁是给写操作用的，读不需要锁；意思就是ConcurrentHashMap可以读并行，写的同时可以读，但是写不能并行，需要获取锁。
+
+这个分段锁的源码优点复杂，有时间再仔细研究
+
+注意！这个ConcurrentHashMap的迭代有个弱一致性问题，就是如果对这个ConcurrentHashMap进行遍历，在遍历之后对遍历过的数据进行修改，这是不会遍历出修改值的，但是修改值在遍历之前就可以反应出来这个值。
+
+3. **跳表Map和Set**
+
+跳表Map和Set就是ConcurrentSkipListMap和ConcurrentSkipListSet；TreeSet基于TreeMap实现，ConcurrentSkipListSet也是基于ConcurrentSkipListMap实现。
+
+> 总结就是ConcurrentSkipListMap和ConcurrentSkipListSet基于跳表实现，有序，无锁非阻塞，读和写都完全并行，主要操作复杂度为O(log(N))。
+
+4. **并发队列**
+
+- 无锁非阻塞并发队列：ConcurrentLinkedQueue和ConcurrentLinkedDeque(双端队列/双向链表)
+
+  多线程操作它不需要获取锁，故而不会线程阻塞，这是由CAS实现的
+
+- 普通阻塞队列：基于数组的ArrayBlockingQueue，基于链表的LinkedBlockingQueue和LinkedBlockingDeque
+
+  常用于生产者消费者模式，内部由显式锁ReentrantLock和显式条件Condition实现
+
+  ```java
+  //入队，如果队列满，等待直到队列有空间
+  void put(E e) throws InterruptedException;
+  //出队，如果队列空，等待直到队列不为空，返回头部元素
+  E take() throws InterruptedException;
+  //入队，如果队列满，最多等待指定的时间，如果超时还是满，返回false
+  boolean offer(E e, long timeout, TimeUnit unit) throws InterruptedException;
+  //出队，如果队列空，最多等待指定的时间，如果超时还是空，返回null
+  E poll(long timeout, TimeUnit unit) throws InterruptedException;
+  ```
+
+- 优先级阻塞队列：PriorityBlockingQueue
+
+  这个和普通阻塞队列不一样的是这个出是按照优先级高的先出；内部由堆实现，也用了显式锁ReentrantLock和条件
+
+- 延时阻塞队列：DelayQueue
+
+  延时是由于里面每个元素要求实现Dlayed接口，让里面的每个元素有个时间属性并可以比较，这样当时间过了后就说明元素延迟到了，可以出队给线程使用了，不然线程还在阻塞等待；内部也是用显式锁ReentrantLock和条件实现，多用于实现定时任务
+
+- 其他阻塞队列：SynchronousQueue和LinkedTransferQueue
+
+## 7. 异步任务执行服务
+
+> 从前面的代码看来，有点过于关注线程任务的执行了，这样挺累的，还得看线程的创建，调度，结束等细节；所以这时候就得再高一级地看待这个问题，多从一个管理者的角度来处理线程，只关注开始任务、任务结果、取消任务，这样就轻松多了，站在全局上统筹线程们执行任务
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
