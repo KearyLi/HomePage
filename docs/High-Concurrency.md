@@ -28,6 +28,7 @@
  }
 
  //2.实现接口 ，为什么要有这个，就因为单继承的原因，可以说是单继承缺点的解决方式
+ //使用这个另外一个原因是继承耦合性高
  public class HelloRunnable implements Runnable {
      @Override
      public void run() {
