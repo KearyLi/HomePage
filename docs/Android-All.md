@@ -24,6 +24,8 @@ broadcastRecevier
 
 ## Android Handler 机制
 
+> 它的存在就是因为Android中主线程才能更新UI，主线程不能执行耗时操作，所以得要用子线程
+
 首先得了解异步消息处理机制：由Message、MessageQueue、Looper、Handler四部分组成；执行流程就是创建一个message对象，Handler将这个message放到MessageQueue中，然后Looper发现消息队列中有数据就将数据取出来交给Handler的handleMessage方法处理
 
 ```java
@@ -37,11 +39,11 @@ override fun onCreate(savedInstanceState: Bundle?) {
             }
         }
 }
-private val handler = object : Handler(Looper.getMainLooper()) {//getMainLooper说明在主线程运行
+private val handler = object : Handler(Looper.getMainLooper()) {//绑定到主线程和主线程的消息队列
         override fun handleMessage(msg: Message) {//主线程接受消息处理消息
             //super.handleMessage(msg)
             when(msg.what) {
-                1 -> print("消息来了...")
+                1 -> print("消息来了...")//就可以在UI线程修改页面处理了
             }
         }
 }//可以说主线程的Looper、MessageQueue、Handler吗？可以  多个子线程可以对应多个Handler，向里面发送消息
@@ -49,14 +51,14 @@ private val handler = object : Handler(Looper.getMainLooper()) {//getMainLooper�
 
 由上面就知道Handler用于进程中线程间的通信，而Android中进程间通信用的是Binder
 
-- Message 专门给Handler处理的数据，既可以存储简单数据也可以存储复杂类型数据，单链表数据结构，MessageQueue用链表结构实现队列
+- Message 专门给Handler处理的消息或Runnable对象，既可以存储简单数据也可以存储复杂类型数据，单链表数据结构，MessageQueue用链表结构实现队列
 
   ```java
   int what;int arg1;Object obj;Bundle data;//里面有这些字段
   private static final int MAX_POOL_SIZE = 50;//消息最大为50
   ```
 
-- 消息池 sPool Message里面用sPool指向单链表顶部来实现栈，它的作用是消息被使用后会被回收在这，这部分小时是为了重复利用，所以创建Message的首选是调用Message.obtain()，源码里面推荐的，本来也是这个道理。
+  消息池 sPool Message里面用sPool指向单链表顶部来实现栈，它的作用是消息使用后会被回收在这，这部分消息是为了重复利用，并且采用了享元模式避免重复消息对象；创建Message的首选是调用Message.obtain()，源码里面推荐的，本来也是这个道理。
 
   
 
@@ -69,7 +71,9 @@ private val handler = object : Handler(Looper.getMainLooper()) {//getMainLooper�
   //可选的Messenger，可以发送此消息的回复。具体如何使用的语义取决于发送方和接收方
   ```
 
-- Looper  提供线程上下文环境，创建与线程绑定；创建管理MessageQueue；消费者模式(没消息就阻塞等待)的Looper在MessageQueue中获取消息(只要Looper还在就一直运行，要不跟随应用退出，要不就阻塞)，并叫Handler处理消息；一个Looper只对应一个当前线程，比如Looper.getMainLooper()就是对应当前主线程
+- Looper  用于为线程运行消息循环，提供线程上下文环境，创建与线程绑定；创建管理MessageQueue；消费者模式(没消息就阻塞等待)的Looper在MessageQueue中获取消息(只要Looper还在就一直运行，要不跟随应用退出，要不就阻塞)，并叫Handler处理消息；
+
+  **一个Looper只对应一个线程，反之同样**，比如Looper.getMainLooper()就是对应当前主线程，为什么能直接获取，因为Android在系统启动的时候就用ActivityThread.java创建了
 
   ```java
   /**
@@ -80,12 +84,12 @@ private val handler = object : Handler(Looper.getMainLooper()) {//getMainLooper�
   //Looper的构造函数是私有的，通常都是由静态方法prepare()来创建;上面这个方法也是一样用来创建Looper
   public static void loop() {//这个方法是用来不断从MessageQueue中取消息的
       
-  //这是一个实现Looper线程的典型示例，使用prepare和loop的分离来创建一个初始Handler来与Looper通信。
+  //这是一个源码中实现Looper线程的典型示例，使用prepare和loop的分离来创建一个初始Handler来与Looper通信。
      class LooperThread extends Thread {
          public Handler mHandler;
    
          public void run() {
-             Looper.prepare();
+             Looper.prepare();//初始化当前线程的Looper
    
              mHandler = new Handler(Looper.myLooper()) {
                  public void handleMessage(Message msg) {
@@ -93,7 +97,7 @@ private val handler = object : Handler(Looper.getMainLooper()) {//getMainLooper�
                  }
              };
    
-             Looper.loop();
+             Looper.loop();//进入循环消息模式，有Message就将它发送给它内部target引用的Handler
          }
      }
   ```
@@ -106,10 +110,10 @@ private val handler = object : Handler(Looper.getMainLooper()) {//getMainLooper�
 
   ```java
   public Handler(@NonNull Looper looper, @Nullable Callback callback, boolean async) {
-          mLooper = looper;
-          mQueue = looper.mQueue;
-          mCallback = callback;
-          mAsynchronous = async;
+          mLooper = looper;//如果构造函数中没Looper就使用默认Looper
+          mQueue = looper.mQueue;//使用looper中创建的MessageQueue
+          mCallback = callback;//设置回调接口，默认为null
+          mAsynchronous = async;//默认同步
   }
   public final Message obtainMessage() {//就这个，少用
           return Message.obtain(this);
@@ -119,7 +123,7 @@ private val handler = object : Handler(Looper.getMainLooper()) {//getMainLooper�
   }
   ```
 
-- MessageQueue  前面说过了消息队列是Looper中创建的，这个队列的位置是由Message中when值排序的先进先出；
+- MessageQueue  前面说过了消息队列是Looper中创建的，这个队列中Message位置是由Message中when值排序的先进先出；
 
   ```java
   Message next() {//Looper会调用这个来取消息，这里面有个nativePollOnce(ptr, nextPollTimeoutMillis)调用来判断没消息后的阻塞
@@ -130,7 +134,7 @@ private val handler = object : Handler(Looper.getMainLooper()) {//getMainLooper�
 
   ```java
   //示例： UI线程的Handler
-  Handler mHandler = new Handler(){
+  Handler mHandler = new Handler(){//这个空构造现在已经被弃用
       @Override
       public void handleMessage(Message msg) {
           super.handleMessage(msg);
@@ -141,21 +145,25 @@ private val handler = object : Handler(Looper.getMainLooper()) {//getMainLooper�
   mBackThread.start();
   // 后台线程的Handler
   Handler mBackHandler = new Handler(mBackThread.getLooper());//初始化在start()之后，为了得到mBackThread的Looper
-  mBackHandler.post(new Runnable() {//把这个Runnable放到消息队列中，这里由
+  
+  mBackHandler.post(new Runnable() {//把这个Runnable放到消息队列中，开启一个线程起到多个线程的作用
       @Override
       public void run() {
           // 后台线程执行耗时操作，异步后台任务执行；这个其实和最开始的异步消息处理机制相似，但是这个
-          //的比Thread多了个消息循环机制，还更容易管理
+          //的比Thread多了个消息循环机制(有自己的Looper)，还更容易管理
           ...
           // mHandler发消息，回到主线程更新UI
           mHandler.sendMessage(msg);
       }
-  });//用完及得退出，避免内存泄露
+  });//用完及得退出，避免内存泄露，使用quit或quitSafely(清空消息之前把非延迟消息派发出去处理)
+  //使用场景：对于非UI线程又想用消息机制时、替换平时的Thread匿名线程使用、I/O操作
   ```
-
   
+  Android中多个线程创建的多个不同的Handler都关联到主线程的Looper，一个Looper对应一个线程和消息队列
+  
+  ![](../IMG/HandlerProcess.png)
 
-
+> 项目中Idd就用这个机制来不断发送收集event
 
 
 
