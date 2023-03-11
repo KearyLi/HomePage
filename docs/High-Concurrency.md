@@ -241,6 +241,8 @@ synchronized修饰代码块其实就是上面两个的意思，一个用synchron
 ### 2.3 加锁产生问题
 
 > 死锁：线程相互都持有锁，但还是去获取对方的锁，就会造成死锁
+>
+> 避免死锁：银行加算法，两个线程相同顺序获取两个锁，这样一个线程得不到也会自动获取下一个资源，
 
 显式锁就是对象的锁带有时间限制，得不到锁就释放当前拥有的锁，避免死锁		--这个点先放着，后面解决
 
@@ -358,9 +360,10 @@ interrupt()方法不会让线程显式中断，它只是隐式地将中断位改
 
 > java.util.concurrent.atomic高性能并发工具包，为甚高性能，就是因为里面封装volatile进行操作
 >
+> 比如只想同步一个变量就没必要使用锁，直接用这个原子变量
+>
 > 它的出现替换了synchronized，避免了取锁和放锁上下文切换，线程阻塞等，减少系统开销；高并发专用
 >
-> 比如只想同步一个变量就没必要使用锁，直接用这个原子变量
 
 ### 5.1 原子变量和CAS
 
@@ -378,17 +381,15 @@ interrupt()方法不会让线程显式中断，它只是隐式地将中断位改
     }//10000   线程拿到的永远是更新完成后的值
 ```
 
-
-
 例如AtomicInteger类里面源码：由于现在硬件层次上的支持，可以直接以最底层的方式来操作变量，原子操作更轻量级；属于乐观非阻塞，性能高效
 
 ```java
 ... 
-    private volatile int value;
+    private volatile int value;//原子机制就是用这个保存内存可见性
     private static final Unsafe unsafe = Unsafe.getUnsafe();//硬件层面的操作
-	public final boolean compareAndSet(int expect, int update) {
+	public final boolean compareAndSet(int expect, int update) {//先比较再更新
         return unsafe.compareAndSwapInt(this, valueOffset, expect, update);
-    }//之前只有这个方法是调底层的，这个类中其他方法都基于这个；
+    }//之前只有这个方法是调底层的，这个类中一些其他方法都基于这个；
 	//但是现在少调用了，好多方法都支持调底层，但我想CAS虽然是这个，但也代表所以的调用底层的方法吧？我觉得其实就是一个思想
      /**
      * Atomically increments by one the current value.
@@ -405,9 +406,9 @@ interrupt()方法不会让线程显式中断，它只是隐式地将中断位改
 
 ```java
 public class MyLock {
-    private AtomicInteger status = new AtomicInteger(0);
+    private AtomicInteger status = new AtomicInteger(0);//0表示没锁定，1表示锁定
     public void lock() {
-        while(! status.compareAndSet(0, 1)) {
+        while(status.compareAndSet(0, 1)) {
             Thread.yield();
         }
     }
@@ -437,26 +438,27 @@ public class MyLock {
 
 > 总结：想安全使用计数，反正就是安全改变值就用原子变量；这个高效，乐观，非阻塞，高并发的最爱
 >
-> 其实就是为了解决线程竞态条件问题，然后CAS是一个机制
+> 其实就是为了解决线程竞态条件问题，然后CAS是一个实现机制，但是最根本的还是volatile和unsafe操作
 
 ### 5.2 显式锁
 
-> 首先显示锁是为了解决synchronized使用的局限性，可以说是synchronized的替代方案
+> 首先显示锁是为了解决synchronized使用的局限性，更灵活，可以说是synchronized的替代方案
 
 ![LocksPackage](../IMG/LocksPackage.png)
 
 Lock接口中定义了一些方法lock()/unLock()、tryLock()等，具体实现在ReentrantLock里面
 
-- lock()unLock()：获取锁/释放锁
-- tryLock()：只有当锁在调用时是空闲的，才会获取锁
+- lock()unLock()：获取锁/释放锁，获取不了就一直阻塞直到获取到
+- tryLock()：返回boolean，只有当锁在调用时是空闲的，才会获取锁
 
 - lockinterruptibly()：获取锁，除非当前线程被中断
-- tryLock(long time, TimeUnit unit)：如果锁在给定的等待时间内空闲且当前线程未被中断，则获取锁
+- tryLock(long time, TimeUnit unit)：返回boolean，如果锁在给定的等待时间内空闲且当前线程未被中断，则获取锁
 - newcondition()：返回一个绑定到此Lock实例的新Condition实例
 
-ReentrantLock里面使用了CAS操作，也使用了AQS，两个东西搭配操作实现这个并发工具类；看源码里就是ReentrantLock里实现确实实现了Lock里面的方法，但是实际还是使用AQS具体实现;然后呢，就是AQS里面使用了LockSupport来实现线程的状态切换，而且自身维护了一个等待队列来放线程
+ReentrantLock里面使用了CAS操作，也使用了AQS，线程的状态切换用的是LockSupport里面的pack那些方法，三个东西搭配操作实现这个并发工具类；看源码里就是ReentrantLock里实现确实实现了Lock里面的方法，但是实际还是使用AQS具体实现;然后呢，就是AQS里面使用了LockSupport来实现线程的状态切换，而且自身维护了一个等待队列来放线程
 
 ```java
+//ReentrantLock有两个构造方法，其中一个选择是否公平，默认不公平，由于现在优化得挺好的，所以继续默认不公平，就像人生一样，看似公平，实则还得看环境与个人
 //ReentrantLock里面的内部类
 abstract static class Sync extends AbstractQueuedSynchronizer//AQS
 static final class NonfairSync extends Sync//不公平锁,默认不公平锁
@@ -467,9 +469,28 @@ public void lock() {
 }
 ```
 
+```java
+//例子，它其实就是个工具包，封装了一些有用的特性而已
+public class Counter {
+    private final Lock lock = new ReentrantLock();
+    private volatile int count;
+    public void incr() {
+        lock.lock();//其实最好用tryLock()，这样避免锁在被别的线程持有，防止了死锁
+        try {
+            count++;
+        } finally {
+            lock.unlock();
+        }
+    }
+    public int getCount() {
+        return count;
+    }
+}
+```
+
 > 其实可以在这说明一下LockSuport里面方法的具体含义的，但是这个由AQS封装使用，没在显式锁出现，就先放着，等后面复盘时再仔细深入
 >
-> 总结就是这里包中的接口和类主要就是比synchronized功能多，高效一点，可程序地自由命令控制线程。这里还多了个AQS的东西，显式锁就是CAS和AQS和LockSuport搭配操作
+> 总结就是这里包中的接口和类主要就是比synchronized功能多，高效一点，能限时，能返回true/false，可程序地自由命令控制线程。这里还多了个AQS的东西，显式锁就是CAS和AQS和LockSuport搭配操作
 
 ### 5.3 显式条件
 
@@ -537,7 +558,7 @@ public class WaitThread extends Thread {
 public class CopyOnWriteArrayList<E>
     implements List<E>, RandomAccess, Cloneable, java.io.Serializable {    
 /** The array, accessed only via getArray/setArray. */
-    private transient volatile Object[] array;
+    private transient volatile Object[] array;//原子引用
 
     /**
      * Gets the array.  Non-private so as to also be accessible
@@ -546,7 +567,7 @@ public class CopyOnWriteArrayList<E>
     final Object[] getArray() {
         return array;
     }
-    public E set(int index, E element) {
+    public E set(int index, E element) {//和public boolean add(E e) {差不多的机制
         final ReentrantLock lock = this.lock;//写使用了显式锁，读不加锁，所以读支持高并发
         lock.lock();
         try {
@@ -555,7 +576,7 @@ public class CopyOnWriteArrayList<E>
 
             if (oldValue != element) {
                 int len = elements.length;
-                Object[] newElements = Arrays.copyOf(elements, len);
+                Object[] newElements = Arrays.copyOf(elements, len);//复制一份来进行操作
                 newElements[index] = element;
                 setArray(newElements);
             } else {
@@ -571,7 +592,7 @@ public class CopyOnWriteArrayList<E>
 
 > 其实还有个CopyOnWriteArraySet，但它是在CopyOnWriteArrayList的基础上操作的，差不多，而且性能低
 >
-> 总结就是写时复制容器适合读并发，写少，容器体积不大的场景
+> 总结就是写时复制容器适合读并发，写少，容器体积不大的场景，它是一种保证线程安全的思维
 
 2. **并发HashMap**
 
@@ -581,17 +602,17 @@ public class CopyOnWriteArrayList<E>
 
 这个分段锁的源码优点复杂，有时间再仔细研究
 
-注意！这个ConcurrentHashMap的迭代有个弱一致性问题，就是如果对这个ConcurrentHashMap进行遍历，在遍历之后对遍历过的数据进行修改，这是不会遍历出修改值的，但是修改值在遍历之前就可以反应出来这个值。
+注意！这个ConcurrentHashMap的迭代有个**弱一致性问题**，就是如果对这个ConcurrentHashMap进行遍历，在遍历之后对遍历过的数据进行修改，这是不会遍历出修改值的，但是修改值在遍历之前就可以反应出来这个值。时间差和分段锁机制导致的
 
 3. **跳表Map和Set**
 
-跳表Map和Set就是ConcurrentSkipListMap和ConcurrentSkipListSet；TreeSet基于TreeMap实现，ConcurrentSkipListSet也是基于ConcurrentSkipListMap实现。
+基于哈希的可排序的跳表Map和Set，就是ConcurrentSkipListMap和ConcurrentSkipListSet；TreeSet基于TreeMap实现，ConcurrentSkipListSet也是基于ConcurrentSkipListMap实现。
 
 > 总结就是ConcurrentSkipListMap和ConcurrentSkipListSet基于跳表实现，有序，无锁非阻塞，读和写都完全并行，主要操作复杂度为O(log(N))。
 
 4. **并发队列**
 
-- 无锁非阻塞并发队列：ConcurrentLinkedQueue和ConcurrentLinkedDeque(双端队列/双向链表)
+- 无锁非阻塞并发队列：ConcurrentLinkedQueue(单向链表)和ConcurrentLinkedDeque(双端队列/双向链表)
 
   多线程操作它不需要获取锁，故而不会线程阻塞，这是由CAS实现的
 
@@ -622,9 +643,9 @@ public class CopyOnWriteArrayList<E>
 
 ## 7. 异步任务执行服务
 
-> 从前面的代码看来，有点过于关注线程任务的执行了，这样挺累的，还得看线程的创建，调度，结束等细节；所以这时候就得再高一级地看待这个问题，从一个管理者的角度来处理线程，只关注开始任务、任务结果、关闭任务，这样就轻松多了，站在全局上统筹线程们执行任务；执行服务封装了线程执行细节
+> 从前面的代码看来，有点过于关注线程任务的执行了，这样挺累的，还得看线程的创建，调度，结束等细节；所以这时候就得再高一级地看待这个问题，从一个管理者的角度来处理线程，只关注开始任务、任务结果、关闭任务，这样就轻松多了，站在全局统筹线程们执行任务；执行服务封装了线程执行细节
 
-### 7.1 前提概念
+### 7.1 实现原理
 
 Runnable和Callable的区别：
 
@@ -645,13 +666,24 @@ public interface Callable<V> {//有返回结果、可以抛出异常
 }
 ```
 
-执行服务的组成结构：
+ExecutorService的组成方法：
 
-
-
-
-
-
+```java
+void shutdown();//停止接受新任务，已经提交的任务继续执行,不会阻塞等待
+List<Runnable> shutdownNow();//停止接受新任务和终止已经提交但未执行的任务，中断正在执行的任务，不会阻塞等待
+boolean isShutdown();//上面两个其中一个执行了这个就会返回true
+boolean isTerminated();//等待任务全部结束后返回true
+boolean awaitTermination(long timeout, TimeUnit unit) throws InterruptedException;//等待任务结束
+<T> Future<T> submit(Callable<T> task);//提交Callable任务，不代表立马执行，有返回值
+<T> Future<T> submit(Runnable task, T result);//提交Runnable任务，第二个参数是为了任务结束后返回值
+Future<?> submit(Runnable task);//提交Runnable任务，返回值为null
+<T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks)//批量提交任务
+<T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks,
+                                  long timeout, TimeUnit unit)//时间到任务没结束的会被取消
+<T> T invokeAny(Collection<? extends Callable<T>> tasks)//其中一个任务返回结果后这个就返回
+<T> T invokeAny(Collection<? extends Callable<T>> tasks,
+                    long timeout, TimeUnit unit)//限时等待返回其中一个任务结果，
+```
 
 Feature返回结果
 
@@ -666,7 +698,7 @@ public interface Future<V> {
 }
 ```
 
-执行服务的基本用法：
+ExecutorService的基本用法：
 
 ```java
         public class BasicDemo {
@@ -693,6 +725,87 @@ public interface Future<V> {
             }
         }
 ```
+
+
+
+
+
+这块的执行原理优点模糊，后面再回来看看，还有个图没贴上来
+
+
+
+源码基本思想就是AbstractExecutorService具体实现了FeatureService中的方法，里面的submit方法利用FutureTask的run来调用callable的call方法启动线程，并且维护设置线程的状态
+
+```java
+//原理
+FutureTask<Boolean> future = new FutureTask<>(new Callable<Boolean>() {
+   @Override
+   public Boolean call() throws Exception {
+     return true;
+   }
+ });
+```
+
+
+
+FutureTask类的介绍：一个可取消的异步计算。这个类提供了Future的基本实现，具有启动和取消计算、查询计算是否完成以及检索计算结果的方法。只有在计算完成时才能检索结果;如果计算尚未完成，get方法将阻塞。一旦计算完成，就不能重新启动或取消计算(除非使用runAndReset调用计算)。FutureTask可以用来包装可调用对象或可运行对象。因为FutureTask实现了Runnable，所以FutureTask可以提交给Executor执行
+
+### 7.2 线程池
+
+> 为什么要有线程池？是因为执行一个异步任务的开始就是创建线程，然后任务执行完后线程的结束了，这样当下一个任务来的时候还得在创建一次线程，所以为了避免二次创建线程这样消耗资源的操作，任务不用等线程的创建就可以里面执行，最多就是在任务队列中等一会，综上所以才有了线程池
+>
+> 它其实和Handler机制差不多，里面也有个任务队列和工作线程，就像Handler中的MessageQueue和Handler
+
+```java
+
+//----创建线程的规则就是如果当前线程数量小于核心线程数就随着新任务的到来就继续创建，
+//当前到达核心线程数后新任务找不了空闲线程就在任务队列中等待，直到任务队列慢再继续创建新线程,
+//----最终创建的线程不超过最大线程数就行；
+//----然后keepAliveTime是核心线程数以外的线程它空间的生存时间，超过时间就结束它，就像公司中没活干的人，太惨了
+
+public ThreadPoolExecutor(int corePoolSize,//核心线程数
+                              int maximumPoolSize,//最大线程数
+                              long keepAliveTime,//空闲线程存活时间
+                              TimeUnit unit,
+                              BlockingQueue<Runnable> workQueue,//给的任务队列类型
+                              ThreadFactory threadFactory,//
+                              RejectedExecutionHandler handler) {//选择哪种拒绝策略
+//----围绕这个线程池还有个东西叫任务队列，任务队列也有很多种，所以用的时候也得注意看用哪一种好
+//都在BlockingQueue的子类中
+//LinkedBlockingQueue：基于链表的阻塞队列，可以指定最大长度，但默认是无界的，用这个就会一直存任务，线程就不会超过核心线程数
+//ArrayBlockingQueue：基于数组的有界阻塞队列。
+//PriorityBlockingQueue：基于堆的无界阻塞优先级队列
+//SynchronousQueue：没有实际存储空间的同步阻塞队列，就是假队列
+
+//----围绕线程池还有个问题叫拒绝策略，就是任务队列满了，然后也到达最大线程数后的处理办法
+//解决办法就是用ThreadPoolExecutor里面的几个拒绝策略静态内部类
+//被拒绝任务的处理程序，它直接在execute方法的调用线程中运行被拒绝的任务，除非执行程序已经关闭，在这种情况下任务将被丢弃。
+public static class CallerRunsPolicy implements RejectedExecutionHandler {
+//被拒绝任务的处理程序，抛出RejectedExecutionException异常
+public static class AbortPolicy implements RejectedExecutionHandler {
+//被拒绝任务的处理程序，该处理程序将静默地丢弃被拒绝的任务
+public static class DiscardPolicy implements RejectedExecutionHandler {
+//被拒绝任务的处理程序，丢弃等待时间长的未处理请求，然后重试排队执行，除非执行程序关闭，在这种情况下任务将被丢弃
+public static class DiscardOldestPolicy implements RejectedExecutionHandler {
+    
+//----围绕线程池还有个东西叫threadFactory线程工厂，这个是用来自定义创建线程的参数，名字，优先级啥的，
+//默认使用的是Executors中的DefaultThreadFactory，意思就是可以自定义一个线程工厂，然后自定义线程的属性那些
+static class DefaultThreadFactory implements ThreadFactory {
+```
+
+> 那个Executors就是创建线程池的工厂类，里面封装了一些固定参数的线程池，用的时候看参数选择就行
+>
+> 总结就是选择好每个参数的设置，合理安排
+
+
+
+
+
+
+
+
+
+
 
 
 
