@@ -364,6 +364,7 @@ interrupt()方法不会让线程显式中断，它只是隐式地将中断位改
 >
 > 它的出现替换了synchronized，避免了取锁和放锁上下文切换，线程阻塞等，减少系统开销；高并发专用
 >
+> 使用时看看源码，上面说得很清楚，先懂它的用法和实现原理
 
 ### 5.1 原子变量和CAS
 
@@ -789,7 +790,7 @@ public static class DiscardPolicy implements RejectedExecutionHandler {
 public static class DiscardOldestPolicy implements RejectedExecutionHandler {
     
 //----围绕线程池还有个东西叫threadFactory线程工厂，这个是用来自定义创建线程的参数，名字，优先级啥的，
-//默认使用的是Executors中的DefaultThreadFactory，意思就是可以自定义一个线程工厂，然后自定义线程的属性那些
+//默认使用的是Executors中的DefaultThreadFactory，意思就是可以自定义一个线程工厂，然后自定义线程的属性那些东西
 static class DefaultThreadFactory implements ThreadFactory {
 ```
 
@@ -797,17 +798,360 @@ static class DefaultThreadFactory implements ThreadFactory {
 >
 > 总结就是选择好每个参数的设置，合理安排
 
+### 7.3 定时任务
+
+> 这个东西吧，就是创建线程再去顺序定时执行一堆线程，Timer是单线程顺序执行几堆线程
+>
+> 而ScheduledThreadPoolExecutor是一堆线程执行一堆线程，这个能异步，Timer是顺序
+
+Timer:
+
+```java
+//示例
+public class Main {
+    static class DelayTask extends TimerTask {
+        AtomicInteger atomicInteger;
+        public DelayTask(AtomicInteger atomicInteger){
+            this.atomicInteger = atomicInteger;
+        }
+        @Override
+        public void run() {
+            System.out.println("delayed task"+ atomicInteger.incrementAndGet());
+        }
+    }
+    public static void main(String[] args) throws InterruptedException {
+        AtomicInteger atomicInteger = new AtomicInteger();
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new DelayTask(atomicInteger), 1000,1000);
+        timer.scheduleAtFixedRate(new NewTack(atomicInteger), 1000,1000);//timer是单线程，顺序开启两个TimerTask线程
+        Thread.sleep(5000);
+        timer.cancel();
+    }
+}
+
+//Timer内部的优先级队列表示为一个平衡的二进制堆，里面的任务是按照delay时间来排队的，这个很重要哦
+private TimerTask[] queue = new TimerTask[128];
 
 
 
+//Timer的6种定时方法
+//将指定的任务安排在指定的延迟之后执行，执行一次
+public void schedule(TimerTask task, long delay) {
+//将指定的任务安排在指定的时间执行。如果时间在过去，则计划立即执行任务。执行一次
+public void schedule(TimerTask task, Date time) {
+    
+//将指定的任务安排为重复-固定延迟-执行，从指定的延迟之后开始。随后的执行以指定的时间间隔进行。在固定延迟执行中，
+//每次执行都是相对于前一次执行的-实际执行时间-来安排的。如果由于任何原因(例如垃圾收集或其他后台活动)而延迟执行，
+//则后续执行也将被延迟。从长远来看，执行的频率通常会略低于指定周期的倒数(假设Object.wait(long)底层的
+//系统时钟是准确的)。固定延迟执行适用于需要“流畅性”的重复活动。换句话说，它适用于在短期内保持频率准确比在
+//长期内保持频率准确更重要的活动。这包括大多数动画任务，如定期闪烁光标。它还包括在响应人工输入时执行常规活动
+//的任务，例如只要按下键就自动重复一个字符
+public void schedule(TimerTask task, long delay, long period) {
+//将指定的任务安排为从指定的时间开始重复固定延迟执行,其他的和上面一样
+public void schedule(TimerTask task, Date firstTime, long period) {
 
+//将指定的任务安排为重复-固定速率-执行，从指定的延迟之后开始。随后的执行大约定期进行，间隔指定的时间段。
+//在固定速率执行中，每次执行都是相对于初始执行的计划执行时间进行调度的。如果由于任何原因(例如垃圾收集或其
+//他后台活动)而延迟执行，则将快速连续执行两个或多个执行以“赶上”。从长远来看，执行的频率将恰好是指定周期
+//的倒数(假设Object.wait(long)底层的系统时钟是准确的)。固定速率执行适用于对绝对时间敏感的重复活动，
+//例如每小时整点敲一次钟，或每天在特定时间运行计划维护。它还适用于执行固定执行次数的总时间很重要的重复活动，
+//例如每秒钟滴答一次、持续10秒的倒计时计时器。最后，固定速率执行适用于调度多个重复的计时器任务，
+//这些任务必须彼此保持同步。就是在这个时间内执行的次数得和正常情况下一样，就算第一次执行延迟也不影响
+//第二次的真实执行时间，不像上面两个只看实际执行时间，这个只看给的执行时间
+public void scheduleAtFixedRate(TimerTask task, long delay, long period) {
+public void scheduleAtFixedRate(TimerTask task, Date firstTime,long period) {
 
+```
 
+实现原理：就是Timer是单线程，里面有个任务队列，Timer在执行第一个任务之前会判断当前任务是否是周期任务，如果是就给下次任务 设置当前任务执行前时间加period，然后放到队列中，Timer循环着取任务执行
 
+> 注意点：Timer是单线程，所以TimerTask的任务不能是耗时和无限循环
+>
+> 如果执行一个任务抛出异常会导致Timer线程退出，停止所以任务执行
 
+jdk1.8 java.util; Timer类：默认情况下，任务执行线程不作为守护进程线程运行，因此它能够防止应用程序终止。如果调用者想要快速终止计时器的任务执行线程，调用者应该调用计时器的cancel方法。如果计时器的任务执行线程意外终止，例如，因为调用了它的stop方法，任何进一步尝试调度计时器上的任务都将导致IllegalStateException，就像调用了计时器的cancel方法一样。该类是线程安全的:多个线程可以共享一个Timer对象，而不需要外部同步。这个类不提供实时保证:它使用Object.wait(long)方法调度任务。Java 5.0引入了Java .util.concurrent包，其中的一个并发实用程序是ScheduledThreadPoolExecutor，它是一个线程池，用于以给定的速率或延迟重复执行任务。它实际上是TimerTimerTask组合的更通用的替代品，因为它允许多个服务线程，接受各种时间单位，并且不需要继承TimerTask(只需实现Runnable)。使用一个线程配置ScheduledThreadPoolExecutor使其等同于Timer。实现注意:这个类可以扩展到大量的并发计划任务(数千个应该没有问题)。在内部，它使用二进制堆来表示它的任务队列，因此调度任务的成本是O(log n)，其中n是并发调度任务的数量。实现注意:所有构造函数都启动一个计时器线程。
 
+ScheduledThreadPoolExecutor：
 
+```java
+public static void main(String[] args) throws InterruptedException {
+    Timer timer = new Timer();
+    timer.schedule(new LongRunningTask(), 10);
+    timer.schedule(new FixedDelayTask(), 100, 1000);//上面的delay时间小，所以得等它执行完
+}
+//这个不同与上面Timer就是它会创建提供多个线程来执行线程任务，多个线程任务就不用顺序执行了
+public static void main(String[] args) throws InterruptedException {
+        ScheduledExecutorService timer = Executors
+                .newScheduledThreadPool(10);
+        timer.schedule(new LongRunningTask(), 10, TimeUnit.MILLISECONDS);
+        timer.scheduleWithFixedDelay(new FixedDelayTask(), 100, 1000,
+                TimeUnit.MILLISECONDS);
+    }
+```
 
+> 注意ScheduledThreadPoolExecutor里面的重复-固定延迟-执行的时间是按照前一个任务执行完后的时间来计算
+>
+> 总结就是用的时候注意用固定延时还是固定速率，然后参数设置，注意异常的抛出，最后用ScheduledThreadPoolExecutor，但是这个创建的线程数也有点多了，用的时候权衡一下
+
+## 8. 线程同步协作工具
+
+读写锁ReentrantReadWriteLock
+
+> ReadWriteLock的实现，支持与ReentrantLock类似的语义，只是这个有两个锁，读锁和写锁
+>
+> 非公平锁通常比公平锁具有更高的吞吐量
+
+```java
+public interface ReadWriteLock {
+    //Returns the lock used for reading.Returns: the lock used for reading
+    Lock readLock();//读可以并行，写不能
+    //Returns the lock used for writing.Returns: the lock used for writing
+    Lock writeLock();
+}//获取写锁的前提是写和读的锁都空闲，线程获取写锁会封闭所有锁，写锁空闲时才能让多个线程获取读锁
+public class ReentrantReadWriteLock implements ReadWriteLock, java.io.Serializable {
+
+//示例 和Synchronized、显式锁差不多的用法，这个只是有读锁和写锁两个东西，在读多写少的场景时用
+class RWDictionary {
+    private final Map<String, Data> m = new TreeMap<String, Data>();
+    private final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
+    private final Lock r = rwl.readLock();
+    private final Lock w = rwl.writeLock();
+
+    public Data get(String key) {
+        r.lock();
+        try {
+            return m.get(key);
+        } finally {
+            r.unlock();
+        }
+    }
+
+    public String[] allKeys() {
+        r.lock();
+        try {
+            return m.keySet().toArray();
+        } finally {
+            r.unlock();
+        }
+    }
+
+    public Data put(String key, Data value) {
+        w.lock();
+        try {
+            return m.put(key, value);
+        } finally {
+            w.unlock();
+        }
+    }
+
+    public void clear() {
+        w.lock();
+        try {
+            m.clear();
+        } finally {
+            w.unlock();
+        }
+    }
+}
+//内部也是AQS(LockSuport维护线程状态和一个等待队列)机制
+//读锁的并发实现就是只要获取到读锁后会继续检查队列中前面的读锁线程，检查是读锁线程就唤醒它
+```
+
+信号量Semaphore
+
+> 内部也是基于AQS的
+
+```java
+private static final int MAX_AVAILABLE = 100;
+private final Semaphore available = new Semaphore(MAX_AVAILABLE, true);
+
+public Object getItem() throws InterruptedException {
+    available.acquire();//从这个信号量获取一个许可，阻塞直到可用，或者线程中断，获取到后MAX_AVAILABLE减一
+    return getNextAvailableItem();//如果获取不到许可线程会被阻塞
+}
+
+public void putItem(Object x) {
+    if (markAsUnused(x)) available.release();
+}
+```
+
+倒计时门栓CountDownLatch
+
+```java
+//示例，利用倒计时门栓实现线程协作 同时开始，还可以实现等待结束(主从协作) 
+public class Main {
+    static class Racer extends Thread {
+        CountDownLatch latch;
+        public Racer(CountDownLatch latch) {
+            this.latch = latch;
+        }
+        @Override
+        public void run() {
+            try {
+                System.out.println(latch.getCount());
+                Thread.sleep(1000);
+                latch.countDown();
+                System.out.println(latch.getCount());
+                this.latch.await();
+                System.out.println(getName()
+                        + " start run "+System.currentTimeMillis());
+            } catch (InterruptedException e) {
+            }
+        }
+    }
+    public static void main(String[] args) throws InterruptedException {
+        int num = 10;
+        CountDownLatch latch = new CountDownLatch(8);
+        Thread[] racers = new Thread[num];
+        for(int i = 0; i < num; i++) {
+            racers[i] = new Racer(latch);
+            racers[i].start();
+        }
+        Thread.sleep(1000);
+        latch.countDown();//最好放在finally语句中
+    }
+}
+```
+
+ 循环栅栏CyclicBarrier
+
+> 这个和上面的倒计时门栓不同的是，这个是可以重复使用的，上面那个的倒计时是一次性的
+>
+> 同一角色就用这个，倒计时门栓不是同一角色的，它有的负责计数减一，有的在等待计数减一，所以不同
+
+```java
+//BrokenBarrierException是当其中一个线程调用await后被中断或超时就抛出这个
+public int await() throws InterruptedException, BrokenBarrierException {
+
+//示例：实现线程协作之集合点  各线程各自处理自己的事后到集合点  --  交换数据 -- 各线程再继续各自的处理
+public class Main {
+    static class Tourist extends Thread {
+        CyclicBarrier barrier;
+        public Tourist(CyclicBarrier barrier) {
+            this.barrier = barrier;
+        }
+        @Override
+        public void run() {
+            try {
+                //模拟先各自独立运行
+                Thread.sleep((int) (Math.random() * 1000));
+                //集合点A
+                barrier.await();//可以给时间参数
+                //所以线程被唤醒，重置barrier的计数
+                System.out.println(this.getName() + " arrived A "
+                        + System.currentTimeMillis());
+                //集合后模拟再各自独立运行
+                Thread.sleep((int) (Math.random() * 1000));
+                //集合点B
+                barrier.await();
+                //所以线程被唤醒，重置barrier的计数
+                System.out.println(this.getName() + " arrived B "
+                        + System.currentTimeMillis());
+            } catch (InterruptedException | BrokenBarrierException ignored) {
+            }
+        }
+    }
+    public static void main(String[] args) {
+        int num = 3;
+        Tourist[] threads = new Tourist[num];
+        CyclicBarrier barrier = new CyclicBarrier(num, new Runnable() {
+            @Override
+            public void run() {//最后一个线程到达集合点后先执行这个线程
+                System.out.println("all arrived " + System.currentTimeMillis()
+                        + " executed by " + Thread.currentThread().getName());
+            }
+        });
+        for(int i = 0; i < num; i++) {
+            threads[i] = new Tourist(barrier);
+            threads[i].start();
+        }
+    }
+}
+//结果
+all arrived 1678622550035 executed by Thread-2
+Thread-2 arrived A 1678622550035
+Thread-1 arrived A 1678622550035
+Thread-0 arrived A 1678622550035
+    
+all arrived 1678622550827 executed by Thread-0
+Thread-0 arrived B 1678622550827
+Thread-2 arrived B 1678622550827
+Thread-1 arrived B 1678622550827
+```
+
+ThreadLocal
+
+> 线程本地变量  每个访问一个变量(通过其get或set方法)的线程都有自己的、独立初始化的变量副本
+
+```java
+//构造方法 从T可以看出它里面有个T类型变量值
+public class ThreadLocal<T> {
+    
+public void remove() {//移除当前线程的ThreadLocal的值
+//示例
+public class ThreadLocalBasic {
+    static ThreadLocal<Integer> local = new ThreadLocal<>();
+    public static void main(String[] args) throws InterruptedException {
+        Thread child = new Thread() {
+            @Override
+            public void run() {
+                System.out.println("child thread initial: " + local.get());//child线程值为null
+                local.set(200);
+                System.out.println("child thread final: " + local.get());//child线程的值200
+            }
+        };
+        local.set(100);
+        child.start();
+        child.join();
+        System.out.println("main thread final: " + local.get());//主线程main的值100
+    }
+}
+child thread initial: null
+child thread final: 200
+main thread final: 100
+
+//可以设置初始值 因为设置初始值方法是protected的
+public class ThreadLocalInit {
+    static ThreadLocal<Integer> local = new ThreadLocal<Integer>(){
+        @Override
+        protected Integer initialValue() {
+            return 100;
+        }
+    };
+    public static void main(String[] args) {
+        System.out.println(local.get());//100 主线程main的
+        local.set(200);
+        local.remove();//主线程本来改为200的，被移除后使用初始值
+        System.out.println(local.get());//100
+    }
+}
+    
+    
+//原理
+public void set(T value) {
+        Thread t = Thread.currentThread();
+        ThreadLocalMap map = getMap(t);//每个线程都有一个Map，对于每个ThreadLocal对象，
+                                    //调用其get/set实际上就是以ThreadLocal对象为键读写当前线程的Map
+        if (map != null) {
+            map.set(this, value);
+        } else {
+            createMap(t, value);
+        }
+    }
+ThreadLocalMap getMap(Thread t) {
+        return t.threadLocals;
+    }
+void createMap(Thread t, T firstValue) {
+        t.threadLocals = new ThreadLocalMap(this, firstValue);
+    }
+//Thread中的变量
+class Thread implements Runnable {
+ThreadLocal.ThreadLocalMap threadLocals = null;
+```
+
+> 使用场景：日期处理，DateFormat/SimpleDateFormat这个不是线程安全的，用线程本地变量让每个线程有它的副本值
+>
+> 随机数：ThreadLocalRandom，它是Random的子类，利用了ThreadLocal来实现
 
 
 
