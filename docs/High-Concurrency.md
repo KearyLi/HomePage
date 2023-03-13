@@ -1179,7 +1179,9 @@ ThreadLocal.ThreadLocalMap threadLocals = null;
 >
 > 随机数：ThreadLocalRandom，它是Random的子类，利用了ThreadLocal来实现
 
+java 中的锁 -- 偏向锁、轻量级锁、自旋锁、重量级锁：
 
+https://blog.csdn.net/zqz_zqz/article/details/70233767?spm=1001.2101.3001.6650.5&utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7ERate-5-70233767-blog-81568130.pc_relevant_3mothn_strategy_recovery&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7ERate-5-70233767-blog-81568130.pc_relevant_3mothn_strategy_recovery&utm_relevant_index=10
 
 
 
