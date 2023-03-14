@@ -30,7 +30,7 @@
 
 ## 1. 线程
 
-> 首先并发是由线程产生的
+> 首先并发是由线程产生的，进程是系统分配的基本单位，线程是CPU调度的基本单位，线程共享进程的堆和方法区；
 >
 > 线程状态：new创建--start就绪--runing系统调度运行--blocked阻塞--waiting等待--time_waiting时间--终止
 
@@ -64,7 +64,7 @@
          Thread helloThread = new Thread(new HelloRunnable());
          System.out.println(helloThread.getPriority());//线程优先级
          helloThread.start();
-         thread.join();//让调用join的main线程等待thread线程执行结束
+         thread.join();//让调用join的main线程等待thread线程执行结束,原理是调用了主线程的wait让它等待
      }
  }
  
@@ -235,7 +235,8 @@ synchronized修饰代码块其实就是上面两个的意思，一个用synchron
  //…
  }
  
- //这个类中的map是线程安全的，但是putIfAbsent方法不是；这种一边将map改为同步容器，一边对map操作的复合操作就是有问题的
+ //这个类中的map是线程安全的，但是putIfAbsent方法不是；这种一边将map改为同步容器，一边对map操作的
+//复合操作就是有问题的
  
  //伪同步     就是同步错了，就像下面这样，正确的应该同步map对象
  public synchronized V putIfAbsent(K key, V value) {
@@ -288,9 +289,9 @@ synchronized修饰代码块其实就是上面两个的意思，一个用synchron
 
 分清锁、等待队列、条件队列的区别：锁就是synchronized保护机制，等待队列就是线程执行synchronized方法首先得获取对象的锁，如果获取不了自身进入等待队列中；条件队列是线程执行wait方法后进入条件队列阻塞
 
-> 注意wait方法执行会释放之前synchronized获取的锁，如果线程获取了两个锁，就是sync里面还有一个sync，但是wait只会释放一个锁，这时候注意释放的是那个对象的锁，所以会有一个锁没释放，这时别的线程在获取这个锁会获取不到，就会阻塞
+> 注意wait方法执行会释放之前synchronized获取的锁，如果线程获取了两个锁，就是sync里面还有一个sync，但是wait只会释放一个锁，这时候注意释放的是那个对象的锁，所以会有一个锁没释放，这时别的线程在获取这个锁会获取不到，就会阻塞；调用哪个对象的wait就在哪个对象的等待队列中，然后释放该对象的锁
 
-wait()/notify()的使用与原理：首先使用wait和notify的那一块得用synchronized同步(这是必须的)，因为wait后会释放锁，如果不同步哪来的锁释放； wait执行后让线程进入条件队列等待，然后等待时间结束或者notify通知就可以出去了，但是wait等待的不止notify，还有锁和协作变量的改变；
+wait()/notify()的使用与原理：首先使用wait和notify的那一块得用synchronized同步(这是必须的)，因为wait后会释放锁，如果不同步哪来的锁释放； wait执行后让线程进入条件队列等待，然后等待时间结束或者notify通知就可以出去了，或者别的线程调用了本线程的interrupt()方法让本线程抛出异常，但是wait等待的不止notify，还有锁和协作变量的改变；
 
 ```java
 public class Main extends Thread {
@@ -333,6 +334,10 @@ notify得到锁
 notify释放锁
 fired
 后
+    
+//函数区别  官方说了wait后中断和虚假唤醒是可能的，所以最好搭配协作变量
+wait(long timeout)//时间到线程自动唤醒，如果参数为负数则抛出异常
+wait(long timeout, int nanos)//wait(0,0)和wait(0)一样，nanos的作用就是让wait时间多1
 ```
 
 最后补充一下sleep和yield的使用区别：sleep让当前线程状态变为TIME_WITING，然后不释放锁，等时间结束就继续执行；但是yield是线程主动让出CPU时间片，然后回到就绪状态等待运行
@@ -417,7 +422,8 @@ interrupt()方法不会让线程显式中断，它只是隐式地将中断位改
 	public final boolean compareAndSet(int expect, int update) {//先比较再更新
         return unsafe.compareAndSwapInt(this, valueOffset, expect, update);
     }//之前只有这个方法是调底层的，这个类中一些其他方法都基于这个；
-	//但是现在少调用了，好多方法都支持调底层，但我想CAS虽然是这个，但也代表所以的调用底层的方法吧？我觉得其实就是一个思想
+	//但是现在少调用了，好多方法都支持调底层，但我想CAS虽然是这个，但也代表所以的调用底层的方法吧？
+	//我觉得其实就是一个思想
      /**
      * Atomically increments by one the current value.
      *
@@ -568,7 +574,8 @@ public class WaitThread extends Thread {
         System.out.println("fire");
         waitThread.fire();
     }
-}//之前的生产者消费者模式就可以用这个显式锁和显式条件改进，用显式锁创建两个显式条件，一个条件队列专门放生产者线程，另一个条件队列专门放消费者线程
+}//之前的生产者消费者模式就可以用这个显式锁和显式条件改进，用显式锁创建两个显式条件，
+//一个条件队列专门放生产者线程，另一个条件队列专门放消费者线程
 ```
 
 > 总结就是这个显式条件就是专门和显式锁搭配使用，这样可以使用多个条件队列；然后其实显式锁还是显式条件的实际操作和功能主要是靠AQS来实现
