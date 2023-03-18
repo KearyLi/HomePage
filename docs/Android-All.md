@@ -165,6 +165,54 @@ private val handler = object : Handler(Looper.getMainLooper()) {//绑定到主�
 
 > 项目中就用这个机制来不断发送收集event
 
+## Android Binder 机制
+
+> 一开始接触Binder的用法是activity绑定后台service，并且可以调用service里面的方法，这样就得用到Binder机制
+
+```java
+class MyService : Service() {//后台service
+    private val mBinder = DownloadBinder()
+        class DownloadBinder : Binder() {
+            fun startDownload() {
+                Log.d("MyService", "startDownload executed")
+            }
+            fun getProgress(): Int {
+                Log.d("MyService", "getProgress executed")
+                    return 0
+            }
+        }
+    override fun onBind(intent: Intent): IBinder {
+        return mBinder//连接完后会回调这个方法返回Binder对象
+    }
+    ...
+}
+//activity绑定service并调用里面的方法
+lateinit var downloadBinder: MyService.DownloadBinder
+    private val connection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName, service: IBinder) {
+            downloadBinder = service as MyService.DownloadBinder
+            downloadBinder.startDownload()//用Binder对象控制
+            downloadBinder.getProgress()
+        }
+        override fun onServiceDisconnected(name: ComponentName) {
+        }
+    }
+override fun onCreate(savedInstanceState: Bundle?) {
+...
+    bindServiceBtn.setOnClickListener {
+    val intent = Intent(this, MyService::class.java)
+        bindService(intent, connection, Context.BIND_AUTO_CREATE) // 绑定Service
+}
+    unbindServiceBtn.setOnClickListener {
+        unbindService(connection) // 解绑Service
+    }
+}
+```
+
+
+
+
+
 
 
 ## Camera2
