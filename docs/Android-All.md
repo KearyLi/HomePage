@@ -163,9 +163,106 @@ private val handler = object : Handler(Looper.getMainLooper()) {//绑定到主�
   
   ![](../IMG/HandlerProcess.png)
 
-> 项目中Idd就用这个机制来不断发送收集event
+> 项目中就用这个机制来不断发送收集event
 
 
+
+## Camera2
+
+> Camera2在Android5.0推出的，它出现是为了替换废弃的Android4.4 Camera应用级相机框架
+
+android.info.supportedHardwareLevel：不是每个Android5.0以上的设备支持Camera2API所以功能，所以得用这个来查询设备支持程度：
+
+- INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY 旧版，功能和废弃的CameraAPI差不多
+- INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED 有限，设备能做的功能占Camera2大部分，并且得使用HAL3.2以上版本
+- INFO_SUPPORTED_HARDWARE_LEVEL_FULL 全部，设备能提供所有Camera2中所有功能，但得使用HAL3.2及Android5.0以上版本
+- INFO_SUPPORTED_HARDWARE_LEVEL_3 级别3，设备支持YUV和RAW流处理
+- INFO_SUPPORTED_HARDWARE_LEVEL_EXTERNAL 外部相机使用
+
+Camera2主要类：
+
+- CameraManager 相机管理，用来检测摄像头，打开摄像头，获取摄像头支持
+
+  ```java
+  //使用之前在<uses-permission android:name="android.permission.CAMERA"/>
+  //AvailabilityCallback 相机设备开启后会产生回调
+  public static abstract class AvailabilityCallback {
+      public void onCameraAvailable(@NonNull String cameraId) {}
+      public void onCameraUnavailable(@NonNull String cameraId) {}
+  }
+  ```
+
+  
+
+- CameraDevice 物理或逻辑摄像头
+
+  ```java
+  //上面的API打开摄像头后提供回调接口，这样执行CameraDevice中的API后会回调到这
+  public static abstract class StateCallback {
+      // 当 CameraDevice.close() 调用时会触发；如果设备已经关闭，
+      // 后续再次调用 CameraDevice 相关方法会抛出异常 IllegalStateException
+      public void onClosed (CameraDevice camera){...}
+      // 表示设备不能再被使用；再次访问会抛出 CameraAccessException
+      public abstract void onDisconnected (CameraDevice camera){...}
+      // 开启设备失败；再次访问抛出 CameraAccessException，并给出 error
+      public abstract void onError (CameraDevice camera, int error);
+      // 设备被正常打开
+      public abstract void onOpened (CameraDevice camera);
+  }
+  ```
+
+  
+
+- CameraCaptureSession 应用程序和CameraDevice之间的会话通道类，传输从摄像头捕获的数据和从新处理之前同一会话中的数据，数据在surface中渲染输出
+
+  ```java
+  //CameraCaptureSession需要异步执行，它会创建会话管道和数据缓冲区，这个过程耗时
+  CameraCaptureSession.StateCallback//会话通道建立完成后，通道的状态变化会回调到这里面
+  CameraCaptureSession.CaptureCallback//捕获结果回调
+  CameraConstrainedHighSpeedCaptureSession//该类的子类，表示高速会话通道，用来传输高帧率数据
+  ```
+
+  
+
+- CameraMetadata 摄像头的控制命令，固定的，给CameraDevice的命令，请求摄像头的参数、捕获结果
+
+  ```java
+  //抽象类，键值对的数据结构，固定的，只有一个公共方法来获取键值信息
+  public List<TKey> getKeys() {
+      Class<CameraMetadata<TKey>> thisClass = 
+          (Class<CameraMetadata<TKey>>) getClass();
+      return Collections.unmodifiableList(
+              getKeys(thisClass, getKeyClass(), this, /*filterTags*/null));
+  }
+  ```
+
+  
+
+- CameraRequest 从相机设备获取数据的请求，一些命令
+
+  ```java
+  //继承CameraMetadata，意思就是带着命令控制CameraDevice，从中获取数据
+  ```
+
+  
+
+- CameraResult 从相机设备得到的返回结果
+
+  ```java
+  //同样继承CameraMetadata
+  ```
+
+  
+
+- CameraCharacteristics 描述CameraDevice相机设备的属性，固定的，每个手机有不同的摄像头属性，用CameraManager.getCameraCharacteristics(String cameraID)来查询
+
+  ```java
+  //这个也是固定的数值，
+  ```
+
+  
+
+> 流程就是CameraManager检测并打开CameraDevice，建立应用和相机设备之间的CameraCaptureSession通道传输数据，CameraRequest用CameraMetaData命令发送数据下去，然后返回CameraResult
 
 
 
