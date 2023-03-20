@@ -211,6 +211,94 @@ override fun onCreate(savedInstanceState: Bundle?) {
 
 
 
+## Protocol Buffers
+
+> Protocol Buffers是一种用于序列化结构化数据的与语言无关、与平台无关的可扩展机制。
+>
+> 为什么使用它，就是因为它在网络上传输流量使用少，存储时所占用的空间小；它比java自带的序列化好，没有XML的空间密集型(会对解编码造成性能损失)
+
+**特性：**
+
+- 它就是一个谷歌的序列化机制，和xml差不多，而且体积更小，更快，更简单.
+- 用于结构化数据与数据流之间的转换；它可以用在java、Python、C++、go等语言项目中.
+- 它向后兼容性好，后面对`.proto`添加删除字段是不会影响现有的proto服务.
+- 支持不同语言转换，用java生成的序列化数据可以用Python来解析出来，与别的语言共享数据
+
+**不适合场景：**
+
+- 消息体积大的场景，因为它是一次加载到内存的方式，所以对应几兆以上的数据就不推荐用这个
+- 读取序列化数据场景，因为它可能会将相同数据转为不相同的二进制序列化，得再解析出来一次才能知道是相同的
+- 科学项目场景，因为一些浮点数太长的它的转换都不太好
+
+**使用：**定义数据结构化方式`.proto` - 编译器工具转为源代码 - 对应语言将结构化数据写入数据流或将数据流转为结构化数据
+
+1. 
+
+web项目使用：添加Maven配置<dependency>...
+
+Android使用：build.gradle中添加依赖`implementation 'com.google.protobuf:protobuf-java:3.22.2'` 注意版本号，Android中推荐使用Java Lite
+
+`For Android users, it's recommended to use protobuf Java Lite runtime because of its smaller code size.`
+
+2. 
+
+编译器工具中添加.proto文件，并且在里面定义结构化语言对应的消息；为要序列化的每个数据结构添加一条消息；
+
+```protobuf
+message Person {
+  optional string name = 1;
+  optional int32 id = 2;
+  optional string email = 3;
+}
+```
+
+用proto编译器工具将.proto文件转换为对应的语言(源代码)，这个源代码里面描述的就是包含每个字段的简单访问器和方法；
+
+使用protobuf API写入和读取消息：该类提供的get/set方法将字段转换为高效二进制格式，
+
+```java
+Person john = Person.newBuilder()
+    .setId(1234)
+    .setName("John Doe")
+    .setEmail("jdoe@example.com")
+    .build();
+output = new FileOutputStream(args[0]);
+john.writeTo(output);
+```
+
+在java项目中就可以用生成类文件中的方法将 结构化语言 转换为 原始字节；
+
+
+
+**工作原理：**
+
+![drawio](/home/lihang/Applications/drawio.png)
+
+**.probo语法：**
+
+```protobuf
+//示例
+message Person {
+  optional string name = 1;
+  optional int32 id = 2;
+  optional string email = 3;
+}
+enum EnumNote {
+  ENAA = 0;
+  ENBB = 1;
+}
+```
+
+定义字段时，可以定义可选、可重复、单数的；定义消息`message`来嵌套数据集、定义枚举`enum`能规定一组值供选择、定义`oneof`可选字段能在字段中选择其中一个、定义`map`映射能添加键值对数据。
+
+数据类型可以有基本数据类型，其他数据类型(不常用，比如Timestamp、Duration,相比于用这个，更应该在程序中自定义使用)
+
+字段编号给不能重复，如果删除字段就保留编号，防止混乱使用
+
+
+
+官方文档：https://protobuf.dev/		不同语言项目所需编译器下载：https://github.com/protocolbuffers/protobuf
+
 
 
 
