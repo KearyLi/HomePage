@@ -6,7 +6,7 @@
 >
 > 二进制：二进制数主要用法就是0和1的与、或、非、异或、左移、右移操作。
 >
-> 在考虑算法时，想想空间复杂度和时间复杂度，从而得到最优算法。
+> 在考虑算法时，想想空间复杂度(解法需要的内存空间)和时间复杂度(解法需要的时间)，从而得到最优算法。
 >
 > 解决一件事时，想想每种数据结构的特性，由于每种特性有优点缺点，和并发处理一样，这时就得组合用好每种数据结构的优点，从而得到最佳解决办法。就像一个团体一样，每个人发表自己独特看法，从而得到最好的解决方案。
 
@@ -135,6 +135,107 @@ while (node.next != null) {
 2. 读O(1)，查O(1)，插O(1)，删O(1)
 
 哈希表的设计：这个哈希表是新事物，为了让它存元素值后对元素操作的时间复杂度都为O(1)，刚好的方式是用数组来存元素的哈希值，数组的长度一开始是给定的，元素的存放位置为哈希值除数组长度取余，比如哈希值为5存入长度为4的数组中就存在数组1的位置，然后依次按这个规律存；完事会发现元素过多后导致多个元素存在数组的同一位置，这时就将这同一数组位置的元素用链表存放，就是为了让哈希表时间复杂度为O(1)，但是链表太长也会违背这个时间复杂度，所以得在当元素多于数组的一定程度后，用新的更长的数组来存放元素。这就是哈希表的设计原理。
+
+
+
+## 数据结构之栈
+
+> Stack的push、pop操作栈，在需要后入先出的存数据场景下使用
+
+
+
+
+
+场景一：用后缀表达式计算结果，就是用{1,2,3,*,+}来计算，这种计算得先将1,2,3入栈，然后发现下一个是操作符就把栈里面的2,3取出来计算得到结果6继续放到栈里面，然后发现下一个还是操作符，就将栈里面的1,6取出计算得到结果7。
+
+```java
+    public static int pushPop(String[] strings) {
+        Stack<Integer> stack = new Stack<>();
+        for (String string : strings) {
+            switch (string) {
+                case "+":
+                case "-":
+                case "*":
+                case "/":
+                    int num1 = stack.pop();
+                    int num2 = stack.pop();
+                    stack.push(calculate(num1,num2,string));break;
+                default:stack.push(Integer.parseInt(string));break;
+            }
+        }
+        return stack.pop();
+    }
+    public static int calculate(int num1,int num2,String string) {
+        switch (string) {
+            case "+": return num1+num2;
+            case "-": return num1-num2;
+            case "*": return num1*num2;
+            case "/": return num1/num2;
+            default:return 0;
+        }
+    }
+```
+
+
+
+
+
+
+
+## 数据结构之队列
+
+> 有先进先出的场景使用
+>
+> 这个不能直接用Queue，它是一个接口，java使用它的实现类LinkedList，数组队列ArrayQueue，优先级队列PriorityQueue
+
+
+
+场景一：实现滑动窗口，滑动窗口在数字字符串上滑动一次就算一次窗口内数字的和，一开始就指定窗口大小
+
+```java
+static class MovingSum{
+        LinkedList<Integer> queues;
+        int size;
+        int sum;
+        int num;
+        MovingSum(int size) {
+            queues = new LinkedList<>();
+             this.size = size;
+        }
+        void next(int next) {
+            queues.offer(next);
+            sum+=next;
+            try {
+                if (queues.size() > size) {
+                    sum -= queues.poll();
+                }
+            }catch (Exception e){
+                System.out.println("null EEE!");
+            }
+            System.out.println("向右移动到" + ++num+"，窗口数字和为："+sum);
+        }
+    }
+    public static void main(String[] args) {
+        int[] ints = {1,2,3,4,5,6,7,8,9,10};
+        MovingSum movingSum = new MovingSum(3);
+        for (int ins : ints) {
+            movingSum.next(ins);
+        }
+    }
+//结果
+向右移动到1，窗口数字和为：1
+向右移动到2，窗口数字和为：3
+向右移动到3，窗口数字和为：6
+向右移动到4，窗口数字和为：9
+向右移动到5，窗口数字和为：12
+向右移动到6，窗口数字和为：15
+向右移动到7，窗口数字和为：18
+向右移动到8，窗口数字和为：21
+向右移动到9，窗口数字和为：24
+向右移动到10，窗口数字和为：27
+```
+
+
 
 
 
