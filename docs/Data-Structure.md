@@ -58,16 +58,14 @@
 
 ## 数据结构之链表
 
-特性：
+**特性：**
 
 1. 内存中的链表不是连续的，它是由节点指向来指向下一个节点
 2. 创建不需要一次分配内存，可以动态添加删除
 3. 增删改查都是改变节点的指向
 4. 读O(n)，查O(n)，插O(1)，删O(1)
 
-
-
-### 单向链表
+**单向链表：**
 
 > 哨兵节点：用哨兵节点遍历链表，而且能防止链表为空时
 
@@ -111,15 +109,11 @@ while (node.next != null) {
 
 
 
-### 双向链表
+**双向链表：**
 
 > 单向链表其实没啥，但是双向链表处理是得多注意指向的问题，防止丢失指向问题
 
-
-
-
-
-### 循环链表
+**循环链表：**
 
 > 循环链表主要就是注意死循环问题
 
@@ -188,8 +182,6 @@ while (node.next != null) {
 >
 > 这个不能直接用Queue，它是一个接口，java使用它的实现类LinkedList，数组队列ArrayQueue，优先级队列PriorityQueue
 
-
-
 场景一：实现滑动窗口，滑动窗口在数字字符串上滑动一次就算一次窗口内数字的和，一开始就指定窗口大小
 
 ```java
@@ -237,13 +229,109 @@ static class MovingSum{
 
 
 
+## 数据结构之树
+
+> 树就是一个根节点没有父节点，叶子节点没有子节点的结构
+>
+> 它的实现和链表相似，一个类中有三个值：当前值变量，指向左子节点的引用，指向右子节点的引用
+
+```java
+public class TreeNode {
+    int value;
+    TreeNode leftNode;
+    TreeNode rightNode;
+    public TreeNode(int value) {
+        this.value = value;
+    }
+    @Override
+    public String toString() {
+        return "value:"+value+",leftNode: "+leftNode.value+"rightNode: "+rightNode.value;
+    }
+}
+```
 
 
 
+**深度优先搜索：**前序遍历，中序遍历，后序遍历三种遍历方式
+
+前序遍历：
+
+```java
+public static List<Integer> inorderTraversal(TreeNode root) {
+        LinkedList<Integer> nodesLink = new LinkedList<>();
+        Stack<TreeNode> stack = new Stack<>();
+        TreeNode node = root;
+        while (node != null || !stack.isEmpty()) {
+            while (node != null) {
+                nodesLink.add(root.value);
+                stack.push(node);
+                node = node.leftNode;
+            }
+            node = stack.pop();
+            node = node.rightNode;
+        }
+        return nodes;
+    }
+```
+
+中序遍历：
+
+> 常用在在遍历树得到排序数值时
+
+```java
+//这中是不用递归调用的方式，比递归容易理解，还不怕栈溢出
+public static List<Integer> inorderTraversal(TreeNode root) {
+        LinkedList<Integer> nodes = new LinkedList<>();
+        Stack<TreeNode> stack = new Stack<>();
+        TreeNode node = root;
+        while (node != null || !stack.isEmpty()) {
+            while (node != null) {
+                stack.push(node);
+                node = node.leftNode;
+            }
+            node = stack.pop();
+            nodes.add(node.value);
+            node = node.rightNode;
+        }
+        return nodes;
+    }
+```
+
+后序遍历：
+
+```java
+    public static List<Integer> inorderTraversal(TreeNode root) {
+        LinkedList<Integer> nodesLink = new LinkedList<>();
+        Stack<TreeNode> stack = new Stack<>();
+        TreeNode node = root;
+        TreeNode prevNode = null;
+        while (node != null || !stack.isEmpty()) {
+            while (node != null) {
+                stack.push(node);
+                node = node.leftNode;
+            }
+            node = stack.peek();
+            if (node.rightNode != null && node.rightNode != prevNode) {
+                node = node.rightNode;
+            } else {
+                
+                stack.pop();
+                nodesLink.add(node.value);
+                prevNode = node;
+                node = null;
+            }
+        }
+        return nodesLink;
+    }
+```
 
 
 
+**广度优先搜索：**
 
+
+
+## 数据结构之堆
 
 
 

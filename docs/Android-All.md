@@ -167,6 +167,8 @@ private val handler = object : Handler(Looper.getMainLooper()) {//绑定到主�
 
 ## Binder 机制
 
+> 之前的Handler主要是创建一个子线程并在里面循环处理消息，属于子线程之间的消息传递；这个Binder属于进程间的通信机制，比如activity和service就是两个进程，他们通信方式之一就是Binder机制
+>
 > 一开始接触Binder的用法是activity绑定后台service，并且可以调用service里面的方法，这样就得用到Binder机制
 
 ```java
