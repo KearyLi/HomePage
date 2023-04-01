@@ -167,11 +167,17 @@ private val handler = object : Handler(Looper.getMainLooper()) {//绑定到主�
 
 ## Binder 机制
 
-> 之前的Handler主要是创建一个子线程并在里面循环处理消息，属于子线程之间的消息传递；这个Binder属于进程间的通信机制，比如activity和service就是两个进程，他们通信方式之一就是Binder机制
+> 之前的Handler主要是创建一个子线程并在里面循环处理消息，属于子线程之间的消息传递；这个Binder属于进程间的通信机制，比如activity和service就是两个进程，他们通信方式之一就是Binder机制。
 >
-> 一开始接触Binder的用法是activity绑定后台service，并且可以调用service里面的方法，这样就得用到Binder机制
+> 一开始接触Binder的用法是activity绑定后台service，并且可以调用service里面的方法，这样就得用到Binder机制。
+>
+> 首先为什么要有Binder，因为每个应用运行在自己的进程中，进程这个东西是在内存中的，然后Linux中有个东西叫内核Kernel，它也叫内核空间，也在内存中，是一块用于进程与硬件间交流的“中间人”，这个内核中间人它很严格，保证整个系统的生态正常运行；但是现在需要进程和进程之间通信怎么办呢，这得需要内核它老人家同意啊，这时就出现个老人家的徒弟，让进程可以通过徒弟去劝说内核老人家处理通信这件事，这个徒弟就在内核态空间中一个角落，叫动态可加载模块(Loadable Kernel Module，LKM)，这个模块也叫Binder驱动，驱动进程-硬件-进程的数据传输。
+>
+> 然后有个问题，Linux中进程通信不是有管道、socket这些吗，为什么还要弄个Binder这个出来？主要有安全和性能两方面原因，Binder它在安全上使用的机制可以对通信的两方做身份验证，比socket更安全，在数据传输上也更高效。
+>
+> 下面是简单的activity绑定后台service，用Binder进行通信，还有AIDL也是用Binder通信。
 
-```java
+```kotlin
 class MyService : Service() {//后台service
     private val mBinder = DownloadBinder()
         class DownloadBinder : Binder() {
@@ -209,9 +215,78 @@ override fun onCreate(savedInstanceState: Bundle?) {
         unbindService(connection) // 解绑Service
     }
 }
+
+//AIDL的IPC通信
+//服务端
+class MyService : Service() {
+
+    private val mBinder = object : IMyAidlInterface.Stub() {
+        override fun saveData(data: String?) {
+            if (data != null) {
+                ,,,//执行数据保存动作
+            }
+        }
+    }
+    override fun onCreate() {
+        super.onCreate()
+    }
+}
+//客户端
+class MainActivity : AppCompatActivity() {
+    private val TAG = "MainActivity"
+    var remoteInterface: IMyAidlInterface? = null
+
+    private val connection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
+            remoteInterface = IMyAidlInterface.Stub.asInterface(service)
+        }
+
+        override fun onServiceDisconnected(name: ComponentName?) {
+        }
+    }
+
+    private fun bindRemote() {
+        val intent = Intent()
+        intent.component =
+            ComponentName("com.example.serviceaidl", "com.example.serviceaidl.MyService")
+
+        var bindService = bindService(intent, connection, Context.BIND_AUTO_CREATE)
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+        val sendButton: Button = findViewById(R.id.sendRemote)
+        val editData: EditText = findViewById(R.id.editData)
+
+        sendButton.setOnClickListener {
+            val dataNum: String = editData.text.toString()
+
+            bindRemote()
+            remoteInterface?.saveData(dataNum)
+        }
+
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        unbindService(connection)
+    }
+
+}
+//在AIDL生成的接口文件中有Binder代理对象和Binder本地对象
+//如果这个service是和activity在一个项目中，那就是本地对象
+//如果service在别的app中，那使用的就是Binder代理对象来进行信息传递
+//
 ```
 
-
+> 实现原理：在内核空间的Binder模块中有个叫ServiceManager，它会保存每个service进程的信息。
+>
+> 注意这里可能不是activity向Binder通知，但是肯定是一个进程
+>
+> 具体就是activity会向Binder通知，叫Binder建立SM，然后每个service进程启动后会向SM记录自己的信息，所以进程间通信就得经过Binder和SM这部分。然后其实客户端调服务端这样的IPC，客户端调用服务端中的方法，看起来是在客户端中调用了，但实际上客户端中调用方法这个动作只是给Binder一个信号(代理对象)，让Binder从SM中找到这个服务端，然后叫服务端执行这个方法，然后返回结果(也是一个代理对象)，Binder再把这个结果给客户端。
+>
+> 到现在就可以发现Binder内部操作挺多的，但是在使用上来看很简单，客户端自己做命令，服务端自己执行。这就是面向对象思想中的封装复杂操作，让使用者轻松使用这个机制。
 
 
 

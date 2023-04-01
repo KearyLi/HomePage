@@ -180,7 +180,7 @@ while (node.next != null) {
 
 > 有先进先出的场景使用
 >
-> 这个不能直接用Queue，它是一个接口，java使用它的实现类LinkedList，数组队列ArrayQueue，优先级队列PriorityQueue
+> 这个不能直接用Queue，它是一个接口，java使用它的实现类LinkedList，数组队列ArrayQueue，PriorityQueue
 
 场景一：实现滑动窗口，滑动窗口在数字字符串上滑动一次就算一次窗口内数字的和，一开始就指定窗口大小
 
@@ -332,6 +332,48 @@ public static List<Integer> inorderTraversal(TreeNode root) {
 
 
 ## 数据结构之堆
+
+> 堆这个东西搞明白最大堆，最小堆的样子，和删除插入节点值后数据怎么移动就行了、堆的使用主要就是得到最大值或最小值；
+>
+> 最大堆就是父节点大于等于字节点，最小堆就是子节点大于等于父节点；
+>
+> java中堆用PriorityQueue实现，记得它不是队列，它最大堆最小堆是由构造函数中传入的比较规则设置的，默认最小堆
+
+特性：
+
+1. 由于最大堆最小堆的根节点就是最大值最小值，所以得到最大值最小值的时间复杂度为O(1)
+2. 插入删除节点的时间复杂读为O(logn)
+
+```java
+//抛异常方法
+boolean add(E e);//插入新元素
+E remove();//删除堆顶元素
+E element();//得到堆顶元素
+//不抛异常方法
+boolean offer(E e);//插入新元素
+E poll();//删除堆顶元素
+E peek();//得到堆顶元素
+```
+
+
+
+## 数据结构之前缀树
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
