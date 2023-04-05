@@ -501,7 +501,49 @@ public class Client {
 //优点就是不影响真实业务的前提下间接做别的操作，比如安全，日志；提高扩展性
 ```
 
-动态代理：
+动态代理：它比静态代理好的地方就是它可以写成一个工具类，这样每当想创建代理类就调用这个工具类，封装代理实现，就不需要每次都得手写一个代理类。小技巧：这个工具类中实现创建不同代理类可以用反射来动态得到相应的被代理方法。
+
+```java
+public class SimpleJDKDynamicProxyDemo {
+    static interface IService {
+        public void sayHello();
+    }
+
+    static class RealService implements IService {
+        @Override
+        public void sayHello() {
+            System.out.println("hello");
+        }
+    }
+
+    static class SimpleInvocationHandler implements InvocationHandler {
+        private Object realObj;
+
+        public SimpleInvocationHandler(Object realObj) {
+            this.realObj = realObj;
+        }
+
+        @Override
+        public Object invoke(Object proxy, Method method,
+                             Object[] args) throws Throwable {//对代理接口所有方法调用转到此方法
+            System.out.println("entering " + method.getName());
+            Object result = method.invoke(realObj, args);
+            System.out.println("leaving " + method.getName());
+            return result;
+        }
+    }
+
+    public static void main(String[] args) {
+        IService realService = new RealService();
+        IService proxyService = (IService) Proxy.newProxyInstance(
+                IService.class.getClassLoader(), new Class<?>[]{IService.class},
+                new SimpleInvocationHandler(realService));
+        proxyService.sayHello();
+    }
+}
+```
+
+> 还有一种生成代理对象的场景，就是当被代理对象没有用接口时，这时用SDK的动态代理就不行了，就得用cglib库，就可以代理非接口中的方法。SDK代理的是对象，使用时得有被代理对象，但cglib代理的是类
 
 
 
