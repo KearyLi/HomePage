@@ -39,44 +39,45 @@
 ### 1.1 线程创建方式
 
 ```java
- //三种两种创建线程的方式
  //1.继承Thread
- public class HelloThread extends Thread {
+ public class MyThread extends Thread {
      @Override
      public void run() {
-         System.out.println("hello");
+         // 执行线程任务
      }
  }
      public static void main(String[] args) {
-         Thread thread = new HelloThread();
+         // 创建线程
+         MyThread thread = new MyThread();
+         // 启动线程
          thread.start();//调用start后让操作系统创建线程并分配相关资源(单独的程序计数器和栈)以及调度
      }
  }
+```
 
+```java
  //2.实现接口 ，为什么要有这个，就因为单继承的原因，而且继承的耦合性高，可以说是单继承缺点的解决方式
- public class HelloRunnable implements Runnable {
+ public class MyThread implements Runnable {
      @Override
      public void run() {
-         System.out.println("hello");
+         // 执行线程任务
      }
      public static void main(String[] args) {
-         Thread helloThread = new Thread(new HelloRunnable());
-         System.out.println(helloThread.getPriority());//线程优先级
-         helloThread.start();
+         Thread myThread = new Thread(new MyThread());
+         System.out.println(myThread.getPriority());//线程优先级
+         myThread.start();
          thread.join();//让调用join的main线程等待thread线程执行结束,原理是调用了主线程的wait让它等待
      }
  }
- 
-/*
-线程有一些基本属性和方法(可以自定义线程属性)，包括id、name、优先级、状态、设置线程是否daemo线程、
-sleep方法、yield方法、join方法、过时方法等，其实就是Thread类里面的方法，jdk文档很清楚
+```
+
+线程有一些基本属性和方法(可以自定义线程属性)，包括id、name、优先级、状态、设置线程是否daemo线程、sleep方法、yield方法、join方法、过时方法等，其实就是Thread类里面的方法，jdk文档很清楚。
 使用这些方法的技巧就是知道这个方法的作用，以及这个方法是在Object里面，还是Thread的静态方法，
-还是Thread的实例方法，知道这些就可以灵活调用了
-deamo守护线程：如果main线程中创建了一个子线程并设置deamo为true，那主线程执行完后所以线程结束，如果不想主线程结束全部线程结束的话
-就不需要给子线程设置deamo为true
-*/
- 
-//用FutureTask创建线程执行有返回值
+还是Thread的实例方法，知道这些就可以灵活操控了
+deamo守护线程：如果main线程中创建了一个子线程并设置deamo为true，那主线程执行完后所以线程结束，如果不想主线程结束全部线程结束的话就不需要给子线程设置deamo为true
+
+```java
+//3.用FutureTask创建线程执行有返回值
 public class CallerTask implements Callable<String> {
     @Override
     public String call() {
@@ -96,7 +97,31 @@ public class CallerTask implements Callable<String> {
         }
     }
 }
+```
 
+```java
+//4.使用线程池创建线程，避免频繁创建销毁线程的开销
+// 创建线程池
+ExecutorService executor = Executors.newFixedThreadPool(10);
+// 提交任务
+executor.execute(new Runnable() {
+    public void run() {
+        // 执行线程任务
+    }
+});
+// 关闭线程池
+executor.shutdown();
+```
+
+```java
+//补充：匿名内部类实现
+Thread thread = new Thread(new Runnable() {
+    public void run() {
+        // 执行线程任务
+    }
+});
+// 启动线程
+thread.start();
 ```
 
 ### 1.2 线程产生问题
@@ -107,21 +132,25 @@ public class CallerTask implements Callable<String> {
 
 - 缺点1      竞态条件：就是10000个线程对一个静态变量加1，结果变量值小于10000
 
-​                  解决办法：synchronized、显示锁、原子变量
+  解决办法：synchronized、显示锁、原子变量
 
 - 缺点2      内存可见性：一个线程对内存的修改另一个线程看不到；main线程修改了这个变量，但是子线程还是一直运行，并且一直往CPU寄存器或缓存中取放同一个值，就一直看不到不知晓main线程已经修改了
 
-​                  解决办法：volatile关键字、synchronized关键字、显式锁同步
+  解决办法：volatile关键字、synchronized关键字、显式锁同步
 
-​                  这里加volatile后会发生什么呢？多个线程获取和设置这个值是直接和内存操作，不会用自己线程中的副本值
+  这里加volatile后会发生什么呢？多个线程获取和设置这个值是直接和内存操作，不会用自己线程中的副本值
+
+- 缺点3      线程间通信：多个线程需要协调完成某个任务时需要线程间的通信，这就得保证线程安全，避免出现数据不一致或者死锁
+
+这些缺点都属于线程安全的问题：线程安全就是在多线程操作后，对共享数据或资源的访问、修改不会产生数据不一致或不在预期的情况
 
 ### 1.3 线程优点缺点
 
 优点就是能充分利用CPU内存磁盘网络资源，在某些业务上使用线程也能优化用户体验，提高应用细节功能
 
-缺点除了上面两个还有就是线程创建，调度，上下文切换都消耗系统资源；操作系统会为线程创建栈和程序计数器，调度和上下文切换会不断恢复删除CPU寄存器中的值，很可能导致缓存值失效。  为甚后面的缺点不放在上面列出，因为这是硬件层面的问题，解决不了，只能预防，反正就是线程这个功能你爱用不用，用就有好处，但是你得解决出现的问题，不用就老老实实地用主线程，少麻烦事做
+缺点除了上面两个还有就是线程创建，调度，上下文切换都消耗系统资源；操作系统会为线程创建栈和程序计数器，调度和上下文切换会不断恢复删除CPU寄存器中的值，很可能导致缓存值失效。  为甚后面的缺点不放在上面列出，因为这是硬件层面的问题，解决不了，只能预防，反正就是线程这个功能你爱用不用，用就有好处，但是你得解决出现的问题，不用就老老实实地用主线程，而且多线程调试挺困难，不用就少麻烦事做
 
-这里考虑创建线程数量时得考虑时CPU密集型还是IO密集型，因为上个项目里面处理大量数据就只有一个线程处理数据
+这里考虑创建线程数量时得考虑时CPU密集型还是IO密集型，因为见过项目里面处理大量数据就只有一个线程处理数据
 
 ## 2. 线程的竞争机制
 
@@ -129,7 +158,7 @@ public class CallerTask implements Callable<String> {
 
 ### 2.1 锁的正确理解
 
-synchronized修饰实例方法：一个类中实例方法用这个后，同时只能有一个线程调用这个方法，别的线程调用就得先或得锁，如果获取不了就在等待队列中等待；创建的一个对象里面只要有这个关键字的方法就不能同时执行，但是创建两个对象，两个对象就可以同时执行，两个对象是分开的。 关键字保护的是对象，让每个对象都有一个锁和等待队列。synchronized可以同步任何对象，任何对象都有锁和等待队列。
+synchronized修饰实例方法：一个类中实例方法用这个后，同时只能有一个线程调用这个方法，别的线程调用就得先或得锁，如果获取不了就在等待队列中等待；创建的一个对象里面只要有这个关键字的方法就不能同时执行，但是创建两个对象，两个对象就可以同时执行，两个对象是分开的。 关键字保护的是对象，让每个对象都有一个锁和等待队列。synchronized可以同步任何对象，任何对象都有锁和等待队列
 
 synchronized修饰静态方法：和上面同理，只是这个锁保护的是类对象
 
@@ -210,14 +239,17 @@ synchronized修饰代码块其实就是上面两个的意思，一个用synchron
 - 可重入性：线程获取对象锁之后可以调用对象中其它被同步的方法
 - 内存可见性：synchronized可以实现原子操作，在方法上用关键字，而且还能保证内存可见性，线程获得锁后去内存拿值，释放锁后值写回内存。    用这个实现原子操作成本太高，变量用volatile好，操作系统会给变量加特殊指令
 
-- 同步容器：
+- 同步容器：下面这个
 
 ### 2.2 给容器加个锁
 
 ```java
- - 同步容器：就是实现了collection接口的同步容器类，里面和collection差不多，只是每个方法里面使用了synchronized关键字修饰一个Object对象给容器加锁；但是同步容器会出现问题，比如下面的问题
+//同步容器：就是实现了collection接口的同步容器类，里面和collection差不多，只是每个方法里面使用了
+//synchronized关键字修饰一个Object对象给容器加锁；但是同步容器会出现问题，比如下面的问题
   
- // 复合操作
+// 复合操作
+//这个类中的map是线程安全的，但是putIfAbsent方法不是；如果多个线程执行到if(old!=null)这都得到true，
+//那都会调用put方法，这就有点不正常了
      public class EnhancedMap<K, V> {
      Map<K, V> map;
      public EnhancedMap(Map<K, V> map) {
@@ -233,13 +265,9 @@ synchronized修饰代码块其实就是上面两个的意思，一个用synchron
      public V put(K key, V value) {
          return map.put(key, value);
      }
- //…
  }
  
- //这个类中的map是线程安全的，但是putIfAbsent方法不是；这种一边将map改为同步容器，一边对map操作的
-//复合操作就是有问题的
- 
- //伪同步     就是同步错了，就像下面这样，正确的应该同步map对象
+ //伪同步  就是同步错了，就像下面这样，正确的应该同步map对象
  public synchronized V putIfAbsent(K key, V value) {
       V old = map.get(key);
        if (old != null) {
@@ -257,13 +285,14 @@ synchronized修饰代码块其实就是上面两个的意思，一个用synchron
              return map.put(key, value);
          }
      }
- //迭代   就是两个线程对同步容器一个修改，一个遍历；结果就是遍历的会产生异常，因为遍历容器时容器结构发生变化就会抛出异常，解决办法就是在遍历的时候对同步容器加锁
+//迭代   就是两个线程对同步容器一个修改，一个遍历；结果就是遍历的会产生异常，因为遍历容器时容器
+//结构发生变化就会抛出异常，解决办法就是在遍历的时候对同步容器加锁
  
- //所以并发容器问题还是挺多的，性能也低，但是Java还有别的性能高的并发容器        有待深入研究
- //CopyOnWriteArrayList
- //ConcurrentHashMap
- //ConcurrentLinkedQueue
- //ConcurrentSkipListSet
+//所以并发容器问题还是挺多的，性能也低，但是Java还有别的性能高的并发容器        有待深入研究
+//CopyOnWriteArrayList
+//ConcurrentHashMap
+//ConcurrentLinkedQueue
+//ConcurrentSkipListSet
 ```
 
 ### 2.3 加锁产生问题
@@ -281,7 +310,7 @@ synchronized修饰代码块其实就是上面两个的意思，一个用synchron
 - 不可剥夺：每个线程获取锁后只有执行完后才会主动释放锁，自己的锁不会被别的线程抢走
 - 环路等待：A线程获取B线程的锁，B线程获取C线程的锁，C线程获取A线程的锁，中间还可以更多，不过没哪个项目里面有这么多，出发处理太过复杂，不小心环路等待了
 
-显式锁就是对象的锁带有时间限制，得不到锁就释放当前拥有的锁，避免死锁		--这个点先放着，后面解决
+显式锁就是对象的锁带有时间限制，得不到锁就释放当前拥有的锁，避免死锁-------这个点先放着，后面解决
 
 ## 3. 线程的协作机制
 
@@ -289,11 +318,11 @@ synchronized修饰代码块其实就是上面两个的意思，一个用synchron
 
 ### 3.1 协作场景
 
-- 生产者消费者协作模式 —— 生产者往队列中放数据，消费者往队列中取数据，队列空了后消费者停，队列满了生产者停，这个停就是用wait()/notify()或其他来操作线程实现
-- 同时开始 —— 使用某种方式让多个线程一起开始运行
-- 等待结束(主从协作) —— 主任务必须等待子任务结束后才能结束
-- 异步结果 —— 这个现在有点理解不了，好像跟Future返回结果有关
-- 集合点 —— 多个线程都处理到一定程度后在某个地方等待着做一件事，交换数据结果啥的，然后再各自处理各自的
+1. 生产者消费者协作模式 —— 生产者往队列中放数据，消费者往队列中取数据，队列空了后消费者停，队列满了生产者停，这个停就是用wait()/notify()或其他来操作线程实现
+2. 同时开始 —— 使用某种方式让多个线程一起开始运行
+3. 等待结束(主从协作) —— 主任务必须等待子任务结束后才能结束
+4. 异步结果 —— 这个现在有点理解不了，好像跟Future返回结果有关
+5. 集合点 —— 多个线程都处理到一定程度后在某个地方等待着做一件事，交换数据结果啥的，然后再各自处理各自的
 
 ### 3.2 wait()/notify()
 
@@ -354,11 +383,80 @@ wait(long timeout, int nanos)//wait(0,0)和wait(0)一样，nanos的作用就是�
 
 ### 3.3 各场景实现
 
-生产者消费者模式 —— 有生产者线程类、消费者线程类、消息队列类；然后生产者线程调用队列类里面的put方法，如果判断出队列类中满了就调用wait()，然后当前生产者线程就进入条件队列中，并且释放锁；这时消费者拿到锁去调用take方法取消息，如果判断出队列类中空了就调用wait，自己这个线程也进入条件队列中，调用notifyAll()将条件队列中的生产者线程通知出来，然后生产者就又能放消息了；其实想想这个流程里面两方生产和消费的执行间隔次数是不固定的，由操作系统分配，但是能完美地实现消息队列的使用
+1. 生产者消费者模式 —— 有生产者线程类、消费者线程类、消息队列类；然后生产者线程调用队列类里面的put方法，如果判断出队列类中满了就调用wait()，然后当前生产者线程就进入条件队列中，并且释放锁；这时消费者拿到锁去调用take方法取消息，如果判断出队列类中空了就调用wait，自己这个线程也进入条件队列中，调用notifyAll()将条件队列中的生产者线程通知出来，然后生产者就又能放消息了；其实想想这个流程里面两方生产和消费的执行间隔次数是不固定的，由操作系统分配，但是能完美地实现消息队列的使用
 
 更多的还是使用下面java已有的阻塞队列来给线程操作
 
 接口BlockingQueue和BlockingDeque；基于数组的实现类ArrayBlockingQueue；<br>基于链表的实现类LinkedBlockingQueue和LinkedBlockingDeque；基于堆的实现类PriorityBlockingQueue；
+
+```java
+class Producer implements Runnable {//生产者
+    private LinkedList<Integer> buffer;
+    private int maxSize;
+
+    public Producer(LinkedList<Integer> buffer, int maxSize) {
+        this.buffer = buffer;
+        this.maxSize = maxSize;
+    }
+
+    public void run() {
+        while (true) {
+            synchronized (buffer) {
+                while (buffer.size() == maxSize) {
+                    try {
+                        System.out.println("Buffer is full, waiting for consumer to consume...");
+                        buffer.wait();//如果满就让线程在buffer对象的条件队列中等待并释放锁
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                int item = (int) (Math.random() * 100);
+                buffer.add(item);
+                System.out.println("Produced item: " + item);
+                buffer.notifyAll();
+            }
+        }
+    }
+}
+class Consumer implements Runnable {//消费者
+    private LinkedList<Integer> buffer;
+    private int maxSize;
+
+    public Consumer(LinkedList<Integer> buffer, int maxSize) {
+        this.buffer = buffer;
+        this.maxSize = maxSize;
+    }
+
+    public void run() {
+        while (true) {
+            synchronized (buffer) {
+                while (buffer.isEmpty()) {
+                    try {
+                        System.out.println("Buffer is empty, waiting for producer to produce...");
+                        buffer.wait();//如果空就让线程在buffer对象的条件队列中等待并释放锁
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                int item = buffer.removeFirst();
+                System.out.println("Consumed item: " + item);
+                buffer.notifyAll();
+            }
+        }
+    }
+}
+public class ProducerConsumerExample {
+    public static void main(String[] args) {
+        LinkedList<Integer> buffer = new LinkedList<>();//模拟队列放数据和取数据
+        int maxSize = 10;
+        Thread producerThread = new Thread(new Producer(buffer, maxSize));
+        Thread consumerThread = new Thread(new Consumer(buffer, maxSize));
+        producerThread.start();
+        consumerThread.start();
+    }
+}
+
+```
 
 同时开始 —— 多个子线程去调用准备方法来把自己放进条件队列中等待，然后释放锁，等全部子线程都进入条件队列中等待好后，主线程sleap一段时间，然后主线程获取锁去调用开始方法，开始方法中有notifyall方法来唤醒全部子线程，这些子线程就各自把自己从wait后续的操作
 
@@ -367,8 +465,6 @@ wait(long timeout, int nanos)//wait(0,0)和wait(0)一样，nanos的作用就是�
 异步调用 —— 好像就是封装线程处理返回处理结果,这里搞不太懂，先放着☆☆☆后面搞懂了，就是Feature那个东西
 
 集合点 —— 用一个和线程数相同的共享变量来控制，每个线程进入wait前减一，如果减到0之后就notifyall,其实还是灵活运用wait和notify
-
- 
 
 ## 4. 线程的中断
 
@@ -387,6 +483,30 @@ public static boolean interrupted()
 -  isInterrupted()返回当前线程的中断标志位是否为true
 - interrupt()中断当前线程，其实这个不是直接中断，懂吧，它只是设置线程的中断标志位true/false，然后另外两个方法得到线程的中断标志位来做某样处理，让线程退出来；记住不是真正退出
 - 静态方法interrupted()返回当前线程中断标志位是否为true，和上上面那个差不多，但是这个连续两次调用后，第二次会清除标志位从而返回false
+
+```java
+public class ThreadInterruptExample {
+    public static void main(String[] args) throws InterruptedException {
+        Thread thread = new Thread(new MyRunnable());
+        thread.start();
+        Thread.sleep(1000);
+        thread.interrupt();//线程中断，但是如果线程正在IO操作、sleep、wait时会清空中断标志位并抛出异常
+    }
+}
+
+class MyRunnable implements Runnable {
+    public void run() {
+        try {
+            while (!Thread.currentThread().isInterrupted()) {//不断循环并判断线程中断标志位状态
+                System.out.println("Running...");
+                Thread.sleep(500);
+            }
+        } catch (InterruptedException e) {
+            System.out.println("Interrupted");
+        }
+    }
+}
+```
 
 interrupt()方法不会让线程显式中断，它只是隐式地将中断位改变，记住这点！！但是使用它的时候在线程不同状态时发生的事情也不同，比如
 
@@ -411,7 +531,7 @@ interrupt()方法不会让线程显式中断，它只是隐式地将中断位改
 
 ![](../IMG/AtomicPackage.png)
 
-上面包里面的类就是可以以原子的方式来更新Integer、数组类型、引用类型、引用里面的字段等；轻量级操作有大作用，用来很安全地以原子方式更新值；比用synchronized和volatile更好方便
+上面包里面的类就是可以以原子的方式来更新Integer、数组类型、引用类型、引用里面的字段等；轻量级操作有大作用，用来很安全地以原子方式更新值；比直接用synchronized和volatile更好更方便
 
 ```java
     public static void main(String[] args) {
@@ -423,26 +543,31 @@ interrupt()方法不会让线程显式中断，它只是隐式地将中断位改
     }//10000   线程拿到的永远是更新完成后的值
 ```
 
-例如AtomicInteger类里面源码：由于现在硬件层次上的支持，可以直接以最底层的方式来操作变量，原子操作更轻量级；属于乐观非阻塞，性能高效
+例如AtomicInteger类里面源码：由于现在硬件层次上的支持，可以直接以硬件的CPU提供的CAS（Compare-and-Swap）方式来操作变量，原子操作更轻量级；属于乐观非阻塞，性能高效
 
 ```java
-... 
-    private volatile int value;//原子机制就是用这个保存内存可见性
-    private static final Unsafe unsafe = Unsafe.getUnsafe();//硬件层面的操作
-	public final boolean compareAndSet(int expect, int update) {//先比较再更新
-        return unsafe.compareAndSwapInt(this, valueOffset, expect, update);
-    }//之前只有这个方法是调底层的，这个类中一些其他方法都基于这个；
-	//但是现在少调用了，好多方法都支持调底层，但我想CAS虽然是这个，但也代表所以的调用底层的方法吧？
-	//我觉得其实就是一个思想
-     /**
-     * Atomically increments by one the current value.
-     *
-     * @return the previous value
-     */
-    public final int getAndIncrement() {
-        return unsafe.getAndAddInt(this, valueOffset, 1);
-    }
-...
+
+private volatile int value;//原子机制就是用这个保存内存可见性
+private static final Unsafe unsafe = Unsafe.getUnsafe();//硬件层面的操作
+public final boolean compareAndSet(int expect, int update) {//先比较再更新
+    return unsafe.compareAndSwapInt(this, valueOffset, expect, update);
+}//之前只有这个方法是调底层的，这个类中一些其他方法都基于这个；
+//但是现在少调用了，好多方法都支持调底层，但我想CAS虽然是这个，但也代表所以的调用底层的方法吧？
+//我觉得其实就是一个思想
+/**
+* Atomically increments by one the current value.
+*
+* @return the previous value
+*/
+public final int getAndIncrement() {
+   return unsafe.getAndAddInt(this, valueOffset, 1);
+}
+get()：获取当前值。
+set(int newValue)：设置新值。
+getAndSet(int newValue)：获取当前值并设置新值。
+compareAndSet(int expect, int update)：如果当前值等于expect，则设置为update。
+incrementAndGet()：先自增1，再获取当前值。
+addAndGet(int delta)：先增加delta，再获取当前值。
 ```
 
 虽然看起来这个功能少，只能操作里面的一个变量，但是由于这个是原子操作，也可以用这个实现一个乐观非阻塞锁
@@ -691,26 +816,28 @@ public class CopyOnWriteArrayList<E>
 
 ### 7.1 实现原理
 
+> 实现原理就是这几个接口的使用
+
 Runnable和Callable的区别：
 
 ```java
 public interface Runnable {//没有返回结果，也不会抛出异常，只会线程处理
-    /**
-     * @see     java.lang.Thread#run()
-     */
     public abstract void run();
 }
 public interface Callable<V> {//有返回结果、可以抛出异常
-    /**
-     * Computes a result, or throws an exception if unable to do so.
-     * @return computed result
-     * @throws Exception if unable to compute a result
-     */
     V call() throws Exception;
 }
 ```
 
-ExecutorService的组成方法：
+Executor接口中只有一个方法：
+
+```java
+//在将来的某个时间执行给定的命令。该命令可以在新线程、池线程或调用线程中执行，由Executor实现自行决定
+//没有返回结果
+void execute(Runnable command);
+```
+
+ExecutorService接口中的方法：
 
 ```java
 void shutdown();//停止接受新任务，已经提交的任务继续执行,不会阻塞等待
@@ -724,7 +851,7 @@ Future<?> submit(Runnable task);//提交Runnable任务，返回值为null
 <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks)//批量提交任务
 <T> List<Future<T>> invokeAll(Collection<? extends Callable<T>> tasks,
                                   long timeout, TimeUnit unit)//时间到任务没结束的会被取消
-<T> T invokeAny(Collection<? extends Callable<T>> tasks)//其中一个任务返回结果后这个就返回
+<T> T invokeAny(Collection<? extends Callable<T>> tasks)//其中一个任务返回结果后这个就返回结果
 <T> T invokeAny(Collection<? extends Callable<T>> tasks,
                     long timeout, TimeUnit unit)//限时等待返回其中一个任务结果，
 ```
@@ -736,7 +863,7 @@ public interface Future<V> {
     boolean cancel(boolean mayInterruptIfRunning);//cancel作用之后返true，任务完成或已经取消返false
     boolean isCancelled();//查询任务是否被取消，cancel是true这个也是true
     boolean isDone();//查询任务是否已经完成
-    V get() throws InterruptedException, ExecutionException;//返回任务结果，未完成继续阻塞
+    V get() throws InterruptedException, ExecutionException;//返回任务结果，线程运行中就继续阻塞
     V get(long timeout, TimeUnit unit)//返回任务结果，未完成继续阻塞，可以指定任阻塞时间
         throws InterruptedException, ExecutionException, TimeoutException;
 }
@@ -745,49 +872,61 @@ public interface Future<V> {
 ExecutorService的基本用法：
 
 ```java
-        public class BasicDemo {
-            static class Task implements Callable<Integer> {
-                @Override
-                public Integer call() throws Exception {
-                    int sleepSeconds = new Random().nextInt(1000);
-                    Thread.sleep(sleepSeconds);
-                    return sleepSeconds;
-                }
-            }
-            public static void main(String[] args) throws InterruptedException {
-                //使用一个线程来执行服务
-                ExecutorService executor = Executors.newSingleThreadExecutor();//工厂方法模式创建执行服务
-                Future<Integer> future = executor.submit(new Task());//提交执行
-                //模拟执行其他任务
-                Thread.sleep(100);
-                try {
-                    System.out.println(future.get());
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                }
-                executor.shutdown();//关闭任务执行服务
-            }
+public class BasicDemo {
+    static class Task implements Callable<Integer> {//任务
+        @Override
+        public Integer call() throws Exception {
+            int sleepSeconds = new Random().nextInt(1000);
+            Thread.sleep(sleepSeconds);
+            return sleepSeconds;
         }
+    }
+    public static void main(String[] args) throws InterruptedException {
+        //使用一个线程来执行服务
+        ExecutorService executor = Executors.newSingleThreadExecutor();//工厂方法模式创建单线程
+        Future<Integer> future = executor.submit(new Task());//提交任务执行
+        //模拟执行其他任务
+        Thread.sleep(100);
+        try {
+            System.out.println(future.get());
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        executor.shutdown();//关闭任务执行服务
+    }
+}
 ```
 
-
-
-
-
-这块的执行原理优点模糊，后面再回来看看，还有个图没贴上来
-
-
-
-源码基本思想就是AbstractExecutorService具体实现了FeatureService中的方法，里面的submit方法利用FutureTask的run来调用callable的call方法启动线程，并且维护设置线程的状态
+源码基本思想就是ExecutorService的抽象实现类AbstractExecutorService具体实现了ExecutorService接口中的方法；
 
 ```java
-//原理
-FutureTask<Boolean> future = new FutureTask<>(new Callable<Boolean>() {
-   @Override
-   public Boolean call() throws Exception {
-     return true;
-   }
- });
+//AbstractExecutorService.java
+public <T> Future<T> submit(Callable<T> task) {
+        if (task == null) throw new NullPointerException();
+        RunnableFuture<T> ftask = newTaskFor(task);
+        execute(ftask);
+        return ftask;
+    }
+```
+
+RunnableFuture是一个实现了Runnable和Future的接口，它的实现类是FutureTask
+
+FutureTask：可以将Callable或Runnable转为Callable
+
+newTaskFor(task);实际是创建FutureTask对象，然后将Callable或Runnable传递给FutureTask，它里面有个run方法，任务执行服务会使用一个线程执行这个run方法
+
+```java
+FutureTask.java
+public FutureTask(Callable<V> callable) {
+        if (callable == null)
+            throw new NullPointerException();
+        this.callable = callable;
+        this.state = NEW;       // ensure visibility of callable
+    }
+public void run() {
+        if (state != NEW ||
+            !UNSAFE.compareAn
+   .....
 ```
 
 
@@ -838,8 +977,10 @@ static class DefaultThreadFactory implements ThreadFactory {
 ```
 
 > 那个Executors就是创建线程池的工厂类，里面封装了一些固定参数的线程池，用的时候看参数选择就行
->
-> 总结就是选择好每个参数的设置，合理安排
+
+所以最后对任务执行服务的总结就是：ExecutorService是Java中的一个线程池框架，用于管理和调度线程任务的执行。它是通过ThreadPoolExecutor来实现的，里面用参数来配置管理线程任务的执行，包括线程池大小，任务队列，拒绝策略等。然后Executors.java是用来创建不同类型ThreadPoolExecutor，当在某种线程池中提交任务后，ExecutorService会将任务添加到任务队列中，然后根据线程池的配置来调度线程执行任务队列中的任务。
+
+It's over, go to bed.
 
 ### 7.3 定时任务
 
@@ -874,8 +1015,6 @@ public class Main {
 
 //Timer内部的优先级队列表示为一个平衡的二进制堆，里面的任务是按照delay时间来排队的，这个很重要哦
 private TimerTask[] queue = new TimerTask[128];
-
-
 
 //Timer的6种定时方法
 //将指定的任务安排在指定的延迟之后执行，执行一次
