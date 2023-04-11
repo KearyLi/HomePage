@@ -179,7 +179,7 @@ Exception的子类有个叫RuntimeException，这是运行时异常，只有运�
 
 **泛型：**这个东西吧，就是在接口、类、方法上使用，规定他们使用时的类型；可以复用代码，提高代码的安全性
 
-注意它内部是通过类型擦除实现的，就是在使用类或方法时在<>中规定类型，在程序编译后是不存在的，被替换为Object，之后再通过强制类型转换为我们自己的规定类型
+注意它内部是通过类型擦除实现的，就是在使用类或方法时在<>中规定类型，在程序编译后是不存在的，被替换为Object，之后再通过强制类型转换为自己的规定类型
 
 - 保证类型安全，在可以说是受检安全
 - 在类、接口、方法的使用上可以添加不同的类型，从而复用类、接口、方法
@@ -191,17 +191,122 @@ Exception的子类有个叫RuntimeException，这是运行时异常，只有运�
 
 **并发：**[入口](https://github.com/PlusFlyCat/HomePage/blob/main/docs/High-Concurrency.md)
 
-反射：
+**反射：**反射有句经典的名言好像是上帝给java关了一扇门，但是又悄悄给它开了一扇窗，这个窗就是说反射
 
-注解：
+Java类本来是一个封装好一个房间，但是可以利用反射的方式知道房间里面的一切或创建这个房间；就是说可以用反射入口类Class来得到类中所有信息，比如类名、成员变量、方法、构造函数等，还可以修改成员变量、调方法、调构造函数来创建对象
 
-动态代理：
+得到类Class有很多种方式：而且基本类型、数组、枚举都有Class对象
 
-正则表达式：
+```java
+类名.class    比如  Integer.class
+对象.class    比如  person.class 
+对象.Object中的getClass方法   比如person.getClass
+Class.forName("java.lang.Thread")
+    
+//通过反射创建类：
+//通过Class对象的newInstance()方法来创建类的实例
+Class<?> clazz = Class.forName("com.example.MyClass");
+Object obj = clazz.newInstance();
+//通过Constructor类的newInstance()方法来创建类的实例
+Class<?> clazz = Class.forName("com.example.MyClass");
+Constructor<?> constructor = clazz.getConstructor();
+Object obj = constructor.newInstance();
+//通过Method类的invoke()方法来调用类的方法
+Class<?> clazz = Class.forName("com.example.MyClass");
+Object obj = clazz.newInstance();
+Method method = clazz.getMethod("myMethod", String.class);
+Object result = method.invoke(obj, "Hello World!");
+```
 
-函数式编程：
+用上面方式得到Class对象后就直接点出，就有很多可以用的方法
 
+反射的好处：
 
+1. 动态性：使得程序在运行时可以动态地获取类的信息，调用对象的方法，创建对象实例等
+2. 可扩展性：反射使得Java程序可以扩展并且具有更高的灵活性，程序可以在运行时根据不同的情况加载不同的类，调用不同的方法，实现不同的功能
+3. 框架支持：Java反射被广泛地应用于各种框架中，如Spring、JUnit等，通过反射机制，这些框架可以自动地加载类、实例化对象、调用方法等
+4. 调试支持：Java反射提供了调试程序的能力，可以在运行时获取对象的状态、属性、方法等信息，帮助开发人员更好地理解程序运行过程中的问题
+5. 代码灵活性：Java反射可以让代码更加灵活，可以动态地创建对象、调用方法、获取属性等，可以避免在编写代码时出现一些硬编码的限制
+
+> 反射是在运行时才知道类型，所以还是容易出现问题的
+>
+> 动态代理里面就是用反射实现
+>
+> 好多人说用反射实现序列化和反序列化，这性能不好吧，可以用Protobuf工具，那个比xml体积还小
+>
+> 注意有的方法会随着jdk或者SDK的更新取消 比如最近SDK里面的newInstance方法
+
+有个问题，为啥创建对象不直接new呢，还搞这么麻烦，是有什么好处吗？
+
+其实是为了避免硬编码，就是程序在创建时类加载器会把所有class字节码放到内存，如果new了就会创建一个对象在内存中；这个过程中有个缺点就是程序开始就会大量加载class文件new对象操作，这太硬了，所以才有了反射这个动态加载方式，用到的时候再加载创建
+
+**注解：**
+
+**动态代理：**并发里面的代理模式，就那个用法
+
+**正则表达式：**其实就是个字符表示机制，用来匹配一类字符的表达方式，每天都在用，比如linux中的 rm hh*.txt
+
+用正则表达式可以查找、替换、验证、切分文本中的字符或字符串，它的组成是普通字符和元字符，元字符就是有自身的语法含义；
+
+**函数式编程：**就是一种紧凑的代码方式，就没必要写一些没用的代码
+
+Lambda表达式是Java 8中引入的一种新的语法结构，它允许以更简洁的方式定义函数式接口（Functional Interface）的实现。在Java中，函数式接口是指只有一个抽象方法的接口，Lambda表达式可以直接表示该抽象方法的实现，从而避免了写大量的匿名类。
+
+```java
+(参数列表) -> 方法体
+(parameters) -> expression  或者  (parameters) -> { statements; }
+//使用
+(int a, int b) -> a + b
+    
+//函数式接口实现
+interface MyInterface {
+    void doSomething();
+}
+
+MyInterface myInterface = () -> System.out.println("Do something!");
+myInterface.doSomething();
+
+```
+
+Java中的一些Function、Predicate、Consumer接口就可以用Lambda来表示使用：
+
+```java
+//将一个字符串转换为大写
+Function<String, String> toUpperCase = (String str) -> str.toUpperCase();
+System.out.println(toUpperCase.apply("lambda"));//输出LAMBDA
+//方法引用
+Function<String, Integer> parseInt = Integer::parseInt;
+//Lambda表达式作为方法参数传递
+List<String> names = Arrays.asList("Alice", "Bob", "Charlie");
+names.forEach(name -> System.out.println(name));
+//Lambda表达式也可以作为方法的返回值
+Function<String, Function<String, Integer>> createAdder = (String prefix) -> {
+    return (String suffix) -> {
+        return Integer.parseInt(prefix + suffix);//将两个字符串拼接后转换为整数
+    };
+};
+//高级点的用法
+//使用andThen和compose方法来组合Lambda表达式
+Function<String, String> toUpperCase = String::toUpperCase;
+Function<String, String> addExclamation = str -> str + "!";
+Function<String, String> composed = toUpperCase.andThen(addExclamation);
+String result = composed.apply("hello"); // 输出 "HELLO!"
+//用java中的柯里化函数库Vavr和Guava来实现将多个参数的函数转换为一系列单参数函数
+Function<Integer, Function<Integer, Integer>> add = a -> b -> a + b;
+int result = add.apply(2).apply(3); // 输出 5
+//集合中的数据并行处理，提高了代码执行效率
+List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5);
+int sum = numbers.parallelStream().mapToInt(Integer::intValue).sum();//sum = 15
+//Java 8中引入的另一个新特性，Lambda表达式和默认方法一起使用
+interface MyInterface {
+    default void print(String message) {
+        System.out.println(message);
+    }
+}
+
+MyInterface myInterface = (String message) -> System.out.println(message);
+myInterface.print("Hello"); // 输出 "Hello"
+```
 
 ## Kotlin
 
