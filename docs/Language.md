@@ -2,6 +2,12 @@
 
 > 体系记忆|巩固语言
 
+- [语言](#语言)
+  - [java](#java)
+  - [Kotlin](#kotlin)
+  - [Python](#python)
+
+
 ## java
 
 **<u>java基本知识</u>**

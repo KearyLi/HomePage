@@ -1,6 +1,6 @@
 # Android
 
-> 一个有趣的操作系统
+> 小小操作系统
 
 activity 就是掌握生命周期
 
@@ -405,7 +405,7 @@ Camera2主要类：
 
 
 
-# 技术
+# 其它技术
 
 > 技术，检验基础与实践
 
@@ -529,7 +529,17 @@ message Person {
   }
   ```
 
-okk，结束protobuf，在项目中够用了
+okk，结束protobuf，在项目中够用了，注意版本不同，里面有些定义是会过时的，看官网说明就行
 
 官方文档：https://protobuf.dev/		不同语言项目所需编译器下载：https://github.com/protocolbuffers/protobuf
+
+## Retrofit
+
+
+
+## OkHttp
+
+
+
+## SQLite
 
