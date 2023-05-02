@@ -74,12 +74,6 @@ a 代表添加文件／文件夹到压缩包
 
 sudo apt-get install openssh-server
 
-### sudo密码
-
-```
-nji8970..
-```
-
 ### 安装搜狗输入法
 
 ```
@@ -184,9 +178,70 @@ sudo apt remove virtualbox-dkms virtualbox-qt virtualbox
 
 ```
 
+### 温度控制
+
+在Ubuntu系统中，可以使用lm-sensors和fancontrol工具来控制笔记本风扇的转速。这两个工具需要安装并配置才能使用。以下是具体步骤：
+
+1. 安装lm-sensors和fancontrol。在终端中执行以下命令：
+
+   ```
+   sudo apt-get update
+   sudo apt-get install lm-sensors fancontrol
+   ```
+
+2. 配置lm-sensors。在终端中执行以下命令：
+
+   ```
+   sudo sensors-detect
+   ```
+
+   按照提示一步一步操作，探测到传感器后，将会要求你是否将探测到的传感器信息添加到/etc/modules文件中，输入“yes”后再按回车即可。
+
+3. 测试lm-sensors。在终端中执行以下命令：
+
+   ```
+   sensors
+   ```
+
+   将会显示您笔记本电脑的温度传感器信息。
+
+4. 配置fancontrol。在终端中执行以下命令：
+
+   ```
+   sudo pwmconfig
+   ```
+
+   按照提示一步一步操作，根据探测到的传感器信息配置fancontrol，设置适当的风扇转速。
+
+5. 测试fancontrol。在终端中执行以下命令：
+
+   ```
+   sudo fancontrol
+   ```
+
+   将会显示您笔记本电脑的风扇转速信息。
+
+在安装了lm-sensors和fancontrol之后，您可以使用fancontrol工具来控制风扇的转速。fancontrol工具根据传感器数据来自动调整风扇转速，以保持电脑的温度在安全范围内。您也可以手动配置fancontrol，以便在需要时手动调整风扇转速。
+
+以下是手动配置fancontrol的步骤：
+
+1. 打开终端，并以root用户身份运行fancontrol：
+
+   ```
+   sudo fancontrol
+   ```
+
+2. fancontrol将显示一些有关探测到的传感器和风扇的信息。按照提示一步一步操作，设置风扇的最小转速、最大转速、变化速率等参数。
+
+3. 当您完成配置后，按Ctrl+C退出fancontrol。
+
+现在，fancontrol将自动根据传感器数据调整风扇的转速。如果需要手动调整风扇转速，您可以再次运行fancontrol，然后使用键盘上的上下箭头键来调整风扇转速。调整完毕后，按Ctrl+C退出fancontrol。
+
+请注意，在手动调整风扇转速时，需要谨慎操作，以免损坏电脑硬件或导致系统稳定性问题。建议在了解相关知识和操作方法后再进行调整
+
 ### 解压与快捷图标
 
-```python
+```shell
 解压 .tar.gz压缩包
 tar -zxvf 压缩文件名.tar.gz
 移动文件命令
@@ -225,7 +280,7 @@ Categories=Developer
 
 ### jdk
 
-```java
+```shell
 sudo mkdir /usr/lib/jvm
 
 //解压缩jdk包到/usr/lib/jvm
@@ -243,8 +298,6 @@ export PATH=${JAVA_HOME}/bin:$PATH
 
 //环境生效
 source ~/.bashrc
-
-
 ```
 
 ### 安装kvm并创建虚拟机
@@ -272,16 +325,11 @@ kvm                  1130496  1 kvm_intel
 systemctl start libvirtd 
 systemctl enable libvirtd
 systemctl list-unit-files |grep libvirtd.service //打印启动虚拟化和设置开机自启情况
-
-
-
-
-
 ```
 
 ### 安装配置vscode
 
-```python
+```shell
 //网站下载.deb文件
 https://code.visualstudio.com/
 //安装
@@ -293,14 +341,7 @@ sudo apt install g++
 //时序图
 //https://www.graphviz.org/download/
 sudo apt install graphviz
-
 ```
-
-
-
-
-
-
 
 ### Hexo 建站
 

@@ -10,17 +10,299 @@ service 也是在生命周期是做事情，activity绑定service进行通信，
 
 broadcastRecevier
 
+## Camera2
+
+> Camera2在Android5.0推出的，它出现是为了替换废弃的Android4.4 Camera应用级相机框架
+
+android.info.supportedHardwareLevel：不是每个Android5.0以上的设备支持Camera2API所以功能，所以得用这个来查询设备支持程度：
+
+- INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY 旧版，功能和废弃的CameraAPI差不多
+- INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED 有限，设备能做的功能占Camera2大部分，并且得使用HAL3.2以上版本
+- INFO_SUPPORTED_HARDWARE_LEVEL_FULL 全部，设备能提供所有Camera2中所有功能，但得使用HAL3.2及Android5.0以上版本
+- INFO_SUPPORTED_HARDWARE_LEVEL_3 级别3，设备支持YUV和RAW流处理
+- INFO_SUPPORTED_HARDWARE_LEVEL_EXTERNAL 外部相机使用
+
+Camera2主要类：
+
+- CameraManager 相机管理，用来检测摄像头，打开摄像头，获取摄像头支持
+
+  ```java
+  //使用之前在<uses-permission android:name="android.permission.CAMERA"/>
+  //AvailabilityCallback 相机设备开启后会产生回调
+  public static abstract class AvailabilityCallback {
+      public void onCameraAvailable(@NonNull String cameraId) {}
+      public void onCameraUnavailable(@NonNull String cameraId) {}
+  }
+  ```
+
+- CameraDevice 物理或逻辑摄像头
+
+  ```java
+  //上面的API打开摄像头后提供回调接口，这样执行CameraDevice中的API后会回调到这
+  public static abstract class StateCallback {
+      // 当 CameraDevice.close() 调用时会触发；如果设备已经关闭，
+      // 后续再次调用 CameraDevice 相关方法会抛出异常 IllegalStateException
+      public void onClosed (CameraDevice camera){...}
+      // 表示设备不能再被使用；再次访问会抛出 CameraAccessException
+      public abstract void onDisconnected (CameraDevice camera){...}
+      // 开启设备失败；再次访问抛出 CameraAccessException，并给出 error
+      public abstract void onError (CameraDevice camera, int error);
+      // 设备被正常打开
+      public abstract void onOpened (CameraDevice camera);
+  }
+  ```
+
+- CameraCaptureSession 应用程序和CameraDevice之间的会话通道类，传输从摄像头捕获的数据和从新处理之前同一会话中的数据，数据在surface中渲染输出
+
+  ```java
+  //CameraCaptureSession需要异步执行，它会创建会话管道和数据缓冲区，这个过程耗时
+  CameraCaptureSession.StateCallback//会话通道建立完成后，通道的状态变化会回调到这里面
+  CameraCaptureSession.CaptureCallback//捕获结果回调
+  CameraConstrainedHighSpeedCaptureSession//该类的子类，表示高速会话通道，用来传输高帧率数据
+  ```
+
+- CameraMetadata 摄像头的控制命令，固定的，给CameraDevice的命令，请求摄像头的参数、捕获结果
+
+  ```java
+  //抽象类，键值对的数据结构，固定的，只有一个公共方法来获取键值信息
+  public List<TKey> getKeys() {
+      Class<CameraMetadata<TKey>> thisClass = 
+          (Class<CameraMetadata<TKey>>) getClass();
+      return Collections.unmodifiableList(
+              getKeys(thisClass, getKeyClass(), this, /*filterTags*/null));
+  }
+  ```
+
+- CameraRequest 从相机设备获取数据的请求，一些命令
+
+  ```java
+  //继承CameraMetadata，意思就是带着命令控制CameraDevice，从中获取数据
+  ```
+
+- CameraResult 从相机设备得到的返回结果
+
+  ```java
+  //同样继承CameraMetadata
+  ```
+
+- CameraCharacteristics 描述CameraDevice相机设备的属性，固定的，每个手机有不同的摄像头属性，用CameraManager.getCameraCharacteristics(String cameraID)来查询
+
+  ```java
+  //这个也是固定的数值，
+  ```
+
+
+> 流程就是CameraManager检测并打开CameraDevice，建立应用和相机设备之间的CameraCaptureSession通道传输数据，CameraRequest用CameraMetaData命令发送数据下去，然后返回CameraResult
 
 
 
+## Activity
+
+> Activity就是APP与用户交互的入口点，它的作用是实现系统和应用程序之间的交互
+>
+> 用好生命周期可以优化APP的用户使用，比如切换应用后停止视频播放，减少系统资源消耗，保存进度等等
+
+Activity中使用Intent启动时，有显式Intent和隐式Intent两种
+
+显式Intent：
+
+```kotlin
+val intent = Intent(this,SecondActivity::class.java)
+startActivity(intent)
+```
+
+隐式Intent：这个主要就是在清单文件中添加IntentFilter中的action标签来匹配Intent；注意这个的标签还有data,具体使用时再看
+
+```kotlin
+val intent = Intent()
+intent.action = "com.hang.kearypro.myaction"
+startActivity(intent)
+```
+
+生命周期：
+
+- onCreate()  第一次创建activity时调用；初始化工作、加载资源、初始化一些数据
+- onStart()  可见，但是在后台，不能和用户交互
+- onResume()  位于任务栈顶、可见、在前台、可与用户交互
+- onPause()  不在栈顶、但可见；不能做耗时操作，执行完它后新activity才会启动
+- onStop()  不可见；不能太耗时
+- onRestart()  从onStop()不可见重新onStart()，onResume()到可见；打开app后回到桌面再回到app就走这个
+- onDestory()  实例直接销毁；一般在旋转屏幕、内存调度、返回上一个activity使当前activity从任务栈中移除的情况会调用这个
+
+注意：
+
+1. onCreate和onDestory属于完整生存期；onStart和onStop属于可见生存期；onResume和onPause属于前台生存期
+2. 启动新activity前会先执行旧activity的onPause才调用新activity的生命周期(sdk31)
+3. 如果想要保存状态信息，可以实现onSaveInstanceState回调方法，它会在onStop之前回调
+
+启动模式：
+
+- standard 启动一个就老实创建一个activity实例
+- singleTop  启动一个时判断是否和任务栈顶实例相同
+- singleTask  启动一个时判断是否和任务栈中实例相同，相同就弹出此activity上其他activity，使之处于栈顶
+- singleInstance  另外创建一个任务栈存放activity实例，比如b是这个启动模式，那么a->b->c后BACK就直接回到a，因为b在另外一个任务栈，a和c在一个任务栈，并且a在c下面；但是再BACK一次后会到b
+
+## View原理与自定义
+
+> view在Android中很重要，在实现自定义控件时，会发生滑动冲突问题，解决这个问题就得明白view的事件分发机制与view的内部原理；总的来说就是使用view会发生问题，发生问题就得明白它，然后完美解决它
+
+**View是什么？**其实可以说是一个控件，它包含了微件(Button,TextView..)和ViewGroup，为甚这么说呢，是因为它们的都继承View类
+
+**View位置坐标：**weight、height、left、top、right、bottom、x、y、translationX、translationY
+
+**View事件：**
+
+- MotionEvent(ACTION_DOWN、ACTION_MOVE、ACTION_UP)
+- TouchSlop(滑动的最小距离)
+- VeIocityTracker(手指滑动速度)
+- GestureDetector(检测手指单击、滑动、长按、双击等行为)
+- ScroIIer(由于scrollTo/scrollBy的滑动是瞬间完成的，用这个可以给滑动添加过渡效果)
+
+**View滑动：** view除了点击就是滑动，滑动有三种实现方式
+
+- scrollTo/scrollBy   适用于简单的View内容滑动
+
+  它们的使用只能改变View的内容在View内的位置，不能改变View在布局中的位置；scrollBy属于绝对滑动，scrollTo属于相对滑动；scrollTo源码方法中的mScrollX和mScrollY为View左边缘和内容左边缘距离、View右边缘到内容右边缘距离；scrollBy实际是调用scrollTo来实现
+
+- 添加动画   使用于没有交互的View动画效果
+
+  就是操作View的translationX/Y属性，有两种动画方式，第一种原始动画就是在xml中定义动画标签，第二种属性动画就是在代码中使用一些动画库来实现；注意在实现动画的时候注意View的真正位置
+
+- 改变View的LayoutParams参数改变原始布局   适用于有交互的布局或动画效果
+
+  具体就是获取View的参数，然后改变它，注意这个得在UI线程中操作
+
+  ```kotlin
+  val params = toSecontBtn.layoutParams
+  params.height += 10
+  ```
+
+**View弹性滑动：** 上面的滑动是让View咻地一下过去，没有过渡效果
+
+- ScroIIer 源码分析噢噢噢噢
+
+  ```kotlin
+  toSecontBtn.scrollBy(20,30)//让button中内容向坐上移动一点距离
+  ```
+
+  Scroller本身其实不能实现弹性滑动，它得结合computeScroll方法，这个方法会让View不断重新绘制，这个绘制才是实现弹性滑动的根本原理
+
+- 动画
+
+  ```kotlin
+  //通过动画将Button向右移动300距离，并持续3s
+  ObjectAnimator.ofFloat(toSecontBtn,"translationX",0f,300f).setDuration(3000).start()
+  ```
+
+- 延时
+
+  就是在普通View滑动的基础上使用Handler或View的postDelayed不断发送消息，然后在消息处理中对View处理滑动，从而达到弹性滑动效果
+
+  ```kot
+  ```
+
+**View事件分发机制：** 事件分发机制主要就是为了更好实现自定义View，避免滑动冲突等问题出现
+
+点击事件的传递规则就是得明白MotionEvent的点击事件分发，这个点击事件分发其实就是得明白一个MotionEvent事件产生后是怎么由Activity传递到具体View的过程；这里涉及三个方法dispatchTouchEvent、onInterceptTouchEvent和onTouchEvent
+
+这三个方法的在每个View中都有，即当事件来到此View，那么dispatchTouchEvent方法一定会被调用，然后调用onInterceptTouchEvent这个方法来判断此View是否拦截事件，如果拦截就把事件交给onTouchEvent处理，如果不拦截即返回false就继续将事件传递给此View的子View
+
+```java
+public boolean dispatchTouchEvent(MotionEvent ev) {//原理的伪代码过程
+    boolean consume = false;
+   if (onInterceptTouchEvent(ev)) {
+        consume = onTouchEvent(ev);
+   } else {
+        consume = child.dispatchTouchEvent(ev);
+   }
+    return consume;
+}
+```
+
+注意如果此View拦截并设置有OnTouchListener，那这个就像个大哥一样会处理事件，如果他处理不了返回false才会把事件叫给onTouchEvent小弟处理
+
+事件分发过程，首先事件是右Activity给Window，再给顶级View，最后才是分发给具体的子View处理；所以会发现一个事，当具体子View处理不了事件，即onTouchEvent返回false后，很可能事件会回退到Activity中的onTouchEvent来处理
+
+注意：
+
+- 这里说的事件指down、move、up一次的系列事件
+- 如果一个View拦截并处理事件中的其中一个，那么说明此系列事件都由此View接受处理
+- onInterceptTouchEvent只在这个系列事件中第一个判断时调用
+- 如果down事件到此View的onTouchEvent返回false则说明它处理不了，这时系列事件中后面事件都右它的父元素处理
+- ViewGroup默认不拦截事件，ViewGroup中onInterceptTouchEvent方法默认返回false
+- View没有onInterceptTouchEvent方法，所以事件给它就会直接调用onTouchEvent方法
+
+**View事件分发机制细节：**
+
+1. 事件一般是说MotionEvent，它最初是由Activity的dispatchTouchEvent接收调度，这个方法内部有个window的调用方法getWindow().superDispatchTouchEvent(ev))，实际上就是PhoneWindow实现类将事件传递给一个mDecor，这个mDecor就是activity中setContentView方法中设置的View，到这就完成了从activity到顶层View的事件传递
+2. 到这事件已经来到顶层View(ViewGroup)，这时ViewGroup中的onInterceptTouchEvent如果返回true则事件给它的onTouchEvent处理，如果返回false说明ViewGroup不拦截事件，事件继续传递给里面具体子View进行调度，拦截，处理
+
+**View滑动冲突：** 滑动冲突的场景一般是在有两层可交互的的View叠加，在用户操作的时候发生预料之外的现象
+
+- 场景一：外部滑动和内部滑动方向不一致；例如外面框可以左右滑动，但是里面有个框可以上下滑动
+
+- 场景二：外部滑动和内部滑动方向一致：例如外面框和内部框都可以左右滑动
+
+- 场景三：结合场景一和场景二的场景：例如SlideMenu内部有个ViewPager，完事里面再嵌套一个ListView
+
+  解决方式：
+
+- 场景一：根据手指滑动水平/竖直方向的距离差、夹角、速度的不同分辨出是想要外面View活动还是内部View活动
+
+  ```kot
+  //外部拦截法，父 View 的 onInterceptTouchEvent 方法中拦截子 View 的滑动事件，
+  //然后将它们传递给自己的 onTouchEvent 方法进行处理
+  override fun onInterceptTouchEvent(ev: MotionEvent?): Boolean {
+          var intercepted: Boolean = false
+          val x = ev?.x
+          val y = ev?.y
+          when (ev?.action) {
+              MotionEvent.ACTION_DOWN -> intercepted = false//默认不拦截down事件
+              MotionEvent.ACTION_MOVE -> {
+                  if (条件) {//根据某种条件来拦截事件并让此父View处理
+                      intercepted = true//当前view拦截事件并处理
+                  } else {
+                      intercepted = false
+                  }
+              }
+              MotionEvent.ACTION_UP -> intercepted = false //避免子View处理不了up事件
+          }
+          return intercepted
+      }
+  //内部拦截法，即在子View中重写dispatchTouchEvent,
+  //利用parent.requestDisallowInterceptTouchEvent(true)请求父 View 不要拦截滑动事件
+      override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
+          val x = ev?.x
+          val y = ev?.y
+          when (ev?.action) {
+              MotionEvent.ACTION_DOWN -> parent.requestDisallowInterceptTouchEvent(true)
+              MotionEvent.ACTION_MOVE -> {
+                  if (条件) {//根据某种条件来判断当前View是否处理事件
+                      parent.requestDisallowInterceptTouchEvent(false)
+                  }
+              }
+          }
+          return super.dispatchTouchEvent(ev)
+      }
+  ```
+
+  
+
+- 场景二：由于两个嵌套View的活动方向是一样的，所以上面的办法不适用，这时就得按照业务的某种要求，利用这个要求来选择让哪个View活动
+
+- 场景三：解决办法也是和场景二差不多，按照某种业务规律、规定来处理事件
+
+**View自定义：** 前面都是开胃菜，自定义View才是主角
+
+> 主要掌握view的测量、布局、绘制工作原理，还有主要回调方法(构造方法、onAttach、onDetach..)的实现
+
+在自定义的时候可以选择继承View、ViewGroup或现有控件Button、TextView等
 
 
 
 ## AsyncTask 异步
 
-这个早被弃用了，感觉这个东西太简单，方便，所以会有一些漏洞。现在多用java的并发包工具和Handler
-
-
+> 这个早被弃用了，这个东西过于封装，方便，所以会有一些漏洞。现在多用java的并发包工具和Handler
 
 ## Handler 机制
 
@@ -158,9 +440,9 @@ private val handler = object : Handler(Looper.getMainLooper()) {//绑定到主�
   });//用完及得退出，避免内存泄露，使用quit或quitSafely(清空消息之前把非延迟消息派发出去处理)
   //使用场景：对于非UI线程又想用消息机制时、替换平时的Thread匿名线程使用、I/O操作
   ```
-  
+
   Android中多个线程创建的多个不同的Handler都关联到主线程的Looper，一个Looper对应一个线程和消息队列
-  
+
   ![](../IMG/HandlerProcess.png)
 
 > 项目中就用这个机制来不断发送收集event
@@ -292,102 +574,6 @@ class MainActivity : AppCompatActivity() {
 
 
 
-## Camera2
-
-> Camera2在Android5.0推出的，它出现是为了替换废弃的Android4.4 Camera应用级相机框架
-
-android.info.supportedHardwareLevel：不是每个Android5.0以上的设备支持Camera2API所以功能，所以得用这个来查询设备支持程度：
-
-- INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY 旧版，功能和废弃的CameraAPI差不多
-- INFO_SUPPORTED_HARDWARE_LEVEL_LIMITED 有限，设备能做的功能占Camera2大部分，并且得使用HAL3.2以上版本
-- INFO_SUPPORTED_HARDWARE_LEVEL_FULL 全部，设备能提供所有Camera2中所有功能，但得使用HAL3.2及Android5.0以上版本
-- INFO_SUPPORTED_HARDWARE_LEVEL_3 级别3，设备支持YUV和RAW流处理
-- INFO_SUPPORTED_HARDWARE_LEVEL_EXTERNAL 外部相机使用
-
-Camera2主要类：
-
-- CameraManager 相机管理，用来检测摄像头，打开摄像头，获取摄像头支持
-
-  ```java
-  //使用之前在<uses-permission android:name="android.permission.CAMERA"/>
-  //AvailabilityCallback 相机设备开启后会产生回调
-  public static abstract class AvailabilityCallback {
-      public void onCameraAvailable(@NonNull String cameraId) {}
-      public void onCameraUnavailable(@NonNull String cameraId) {}
-  }
-  ```
-
-  
-
-- CameraDevice 物理或逻辑摄像头
-
-  ```java
-  //上面的API打开摄像头后提供回调接口，这样执行CameraDevice中的API后会回调到这
-  public static abstract class StateCallback {
-      // 当 CameraDevice.close() 调用时会触发；如果设备已经关闭，
-      // 后续再次调用 CameraDevice 相关方法会抛出异常 IllegalStateException
-      public void onClosed (CameraDevice camera){...}
-      // 表示设备不能再被使用；再次访问会抛出 CameraAccessException
-      public abstract void onDisconnected (CameraDevice camera){...}
-      // 开启设备失败；再次访问抛出 CameraAccessException，并给出 error
-      public abstract void onError (CameraDevice camera, int error);
-      // 设备被正常打开
-      public abstract void onOpened (CameraDevice camera);
-  }
-  ```
-
-  
-
-- CameraCaptureSession 应用程序和CameraDevice之间的会话通道类，传输从摄像头捕获的数据和从新处理之前同一会话中的数据，数据在surface中渲染输出
-
-  ```java
-  //CameraCaptureSession需要异步执行，它会创建会话管道和数据缓冲区，这个过程耗时
-  CameraCaptureSession.StateCallback//会话通道建立完成后，通道的状态变化会回调到这里面
-  CameraCaptureSession.CaptureCallback//捕获结果回调
-  CameraConstrainedHighSpeedCaptureSession//该类的子类，表示高速会话通道，用来传输高帧率数据
-  ```
-
-  
-
-- CameraMetadata 摄像头的控制命令，固定的，给CameraDevice的命令，请求摄像头的参数、捕获结果
-
-  ```java
-  //抽象类，键值对的数据结构，固定的，只有一个公共方法来获取键值信息
-  public List<TKey> getKeys() {
-      Class<CameraMetadata<TKey>> thisClass = 
-          (Class<CameraMetadata<TKey>>) getClass();
-      return Collections.unmodifiableList(
-              getKeys(thisClass, getKeyClass(), this, /*filterTags*/null));
-  }
-  ```
-
-  
-
-- CameraRequest 从相机设备获取数据的请求，一些命令
-
-  ```java
-  //继承CameraMetadata，意思就是带着命令控制CameraDevice，从中获取数据
-  ```
-
-  
-
-- CameraResult 从相机设备得到的返回结果
-
-  ```java
-  //同样继承CameraMetadata
-  ```
-
-  
-
-- CameraCharacteristics 描述CameraDevice相机设备的属性，固定的，每个手机有不同的摄像头属性，用CameraManager.getCameraCharacteristics(String cameraID)来查询
-
-  ```java
-  //这个也是固定的数值，
-  ```
-
-  
-
-> 流程就是CameraManager检测并打开CameraDevice，建立应用和相机设备之间的CameraCaptureSession通道传输数据，CameraRequest用CameraMetaData命令发送数据下去，然后返回CameraResult
 
 
 
@@ -397,7 +583,10 @@ Camera2主要类：
 
 
 
-## View事件分发机制
+
+
+
+
 
 
 
@@ -408,7 +597,7 @@ Camera2主要类：
 一个APP的从0到1：
 
 1. 配置开发环境：就是配置电脑环境、Androidstudio软件、然后再根据开发的APP创建项目
-2. 编写代码：利用AndroidStudio写代码、设计界面、插入资源等
+2. 编写代码：利用AndroidStudio写代码、设计界面、资源等
 3. 构建运行：配置好build.gradle，生成对应调试apk在测试机上运行
 4. 调试分析和测试：与测试组结合解决bug，用工具查看APP内存、CPU、网络、渲染等性能，并优化
 5. 发布到应用商店：APP代码设计、代码、bug、性能等问题解决完后用安全密匙签名，发布到Google商店
