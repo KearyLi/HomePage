@@ -315,9 +315,84 @@ myInterface.print("Hello"); // 输出 "Hello"
 
 ## Kotlin
 
-> jf
 
 
+
+
+**静态方法：**
+
+在java中静态方法定义很简单，直接在方法添加static修饰符即可；
+
+但是在Kotlin中有两种方式：它这么做就是为了方便，比如定义工具类时就不需要写一堆static
+
+- 定义单例类，这样里面所以方法都可以直接用调用静态方法的样子调用
+
+  ```kotlin
+  object Util {
+  	fun doAction() {
+  		println("xxx")
+  	}
+  }
+  ```
+
+- 定义伴生对象，这样就能在普通类中定义类似静态方法
+
+  ```kotlin
+  class Util {
+  	fun doAction1() {
+  		println("xxxx")
+  	}
+  	companion object {
+          //@JvmStatic    添加这个后这个方法才是这个类的真正静态方法，不添加也能用
+  		fun doAction2() {
+  			println("xxxx")
+  		}
+  	}
+  }
+  ```
+
+  
+
+
+
+**标准函数：**
+
+- with   将**对象**作为**参数**并对其进行**lambda操作**，**最后一行代码**作为**返回值**返回
+
+  ```kotlin
+  val result = with(obj) {
+  // 这里是obj的上下文
+  "value" // with函数的返回值
+  }
+  ```
+
+- run    和with差不多，但这个是**直接对对象**进行**lambda操作**，并将最后一行代码作为**返回值**返回
+
+  ```kotlin
+  val result = obj.run {
+  // 这里是obj的上下文
+  "value" // run函数的返回值
+  }
+  ```
+
+- apply  在**对象的基础**上对其操作，操作完后**返回此对象**
+
+  ```kotlin
+  val result = obj.apply {
+  // 这里是obj的上下文
+  }
+  // result == obj
+  ```
+
+- let  在**对象的基础**上对其操作，并把**对象传给lambda**操作，最后返回此对象
+
+  ```kotlin
+  obj.let { obj -> //常
+      obj.xxxx
+  }
+  ```
+
+  
 
 
 

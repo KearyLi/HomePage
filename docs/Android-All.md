@@ -292,11 +292,47 @@ public boolean dispatchTouchEvent(MotionEvent ev) {//原理的伪代码过程
 
 - 场景三：解决办法也是和场景二差不多，按照某种业务规律、规定来处理事件
 
-**View自定义：** 前面都是开胃菜，自定义View才是主角
+**View自定义：** 前面都是基础知识，自定义View才是主角
 
-> 主要掌握view的测量、布局、绘制工作原理，还有主要回调方法(构造方法、onAttach、onDetach..)的实现
+> 主要掌握view的测量、布局、绘制工作原理，还有一些回调方法(构造方法、onAttach、onDetach..)的实现
 
 在自定义的时候可以选择继承View、ViewGroup或现有控件Button、TextView等
+
+基本概念：View的显示过程，首先当activity创建好后会将DecorView添加到Window中，即添加到activity中；然后这时会创建ViewRoot的实现类ViewRootImpl对象，来和DecorView关联上，DecorView中的View绘制就是利用ViewRoot中performTraversals方法中的measure、layout、draw三个过程来执行遍历View实现绘制，（DecorView实际就是内容栏，属于顶级View，就是setContentView中设置的那个View），事件分发都是先到DecorView后再分发给具体子View
+
+measure决定了View的宽高、layout决定了View在布局中的位置、draw决定了View的样式内容
+
+MeasureSpec是什么？它其实就是View的规格，为什么有它是因为View的实际大小参数会被父容器规则影响；MeasureSpec实际就是个32位的int值，它又由高2位的SpecMode和30位的SpecSize组成，其中一个SpecMode和一个SpecSize会组成一个MeasureSpec
+
+- SpecMode.UNSPECIFIED   父容器不对子View的规格有任何限制
+- SpecMode.EXACTLY   父容器计算出并规定了View的规格，这个规格就是SpecSize值，对应于LayoutParams中match_parent和具体数值两种模式
+- SpecMode.AT_MOST   父容器给了一个View规格，它不能超过这SpecSize值，对应就是LayoutParams中wrap_content
+
+所以可以明白MeasureSpec其实就是DecorView和子View的实际规格；对于DecorView，它的MeasureSpec由窗口尺寸和自身LayoutParams共同决定；对于子View，它的MeasureSpec由父容器和LayoutParams共同决定实际规格；一旦某个view的MeasureSpec决定了，onMeasure就可以得到View的实际大小规格了
+
+```xml
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"//LayoutParams的精确模式，代表窗口大小
+    android:layout_height="match_parent"//wrap_content是内容最大模式，最大就是窗口大小
+    tools:context=".MainActivity">
+    <Button
+        android:id="@+id/btn_to_second"
+        android:layout_width="wrap_content"//100dp就是固定大小，直接指定LayoutParams值
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="144dp"
+        android:text="@string/btn_to_second"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.526"
+        app:layout_constraintStart_toStartOf="parent" />
+</androidx.constraintlayout.widget.ConstraintLayout>
+```
+
+
+
+
 
 
 
