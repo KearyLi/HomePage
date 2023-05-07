@@ -351,9 +351,6 @@ myInterface.print("Hello"); // 输出 "Hello"
   }
   ```
 
-  
-
-
 
 **标准函数：**
 

@@ -642,7 +642,7 @@ class MainActivity : AppCompatActivity() {
 
 > 设置jdk，sdk，下载个AndroidStudio，配置好就是
 
-### 2. 编写代码
+## 2. 编写代码
 
 工具：
 
@@ -651,25 +651,95 @@ class MainActivity : AppCompatActivity() {
 
 
 
+## 3. 构建运行
+
+**构建工具Gradle：** 自动化构建和打包应用程序
+
+在 Android Studio 中，用于构建 APK 的 Gradle 实际上是一个构建工具链，由 **Gradle 构建系统**和 **Android Gradle 插件**组成
+
+Gradle 是一个基于 Groovy 语言的构建工具，它提供了一种灵活和可扩展的方式来构建和打包 Android 应用程序
+
+Android Gradle 插件是一个构建插件，它扩展了 Gradle 构建系统，使其能够理解和处理 Android 应用程序的特定需求，如资源管理、应用签名、APK 打包等。它还提供了许多构建任务和插件，帮助自动化构建过程，从而提高构建效率
+
+在 Android Studio 中，Gradle 将应用程序的代码和依赖项编译成 Dex 文件，将资源打包成 APK 文件，并使用 Android SDK 提供的工具将 APK 文件进行签名和对齐，最终生成一个可安装的 APK 文件
+
+Gradle 的构建过程包括以下几个步骤：
+
+1. 读取构建文件：Gradle 读取项目根目录下的 build.gradle 文件和 app 模块下的 build.gradle 文件，这些文件包含了应用程序的构建配置信息和依赖项声明。
+2. 下载依赖项：Gradle 根据 build.gradle 文件中的依赖项声明自动下载所需的库文件和插件，并将其缓存到本地 Gradle 缓存中。
+3. 编译源代码：Gradle 使用 Java 编译器编译应用程序的源代码，并生成 Dex 文件
+4. 打包资源：Gradle 使用 AAPT 工具将应用程序的资源打包成 APK
+5. 签名 APK：Gradle 使用 APK 签名工具将 APK 文件进行签名，以确保其未被篡改
+6. 对齐 APK：Gradle 使用 zipalign 工具将 APK 文件进行对齐，以提高应用程序的启动性能
+7. 输出 APK：Gradle 将签名和对齐后的 APK 文件输出到 app/build/outputs/apk 目录下，用来部署到设备或上传到应用商店
+
+**Gradle和Android Gradle插件的区别：**
+
+当你创建一个Android应用程序项目时，Android Studio会自动为你创建一个基本的Gradle构建文件(build.gradle)。这个文件包含了一些Gradle任务，用于编译代码、打包应用程序、生成APK文件等等。
+
+但是，如果你要构建Android应用程序，那么只使用标准的Gradle构建工具可能并不够。这是因为构建Android应用程序需要一些特定的任务和功能，例如生成R.java文件、处理资源、合并清单文件、签名和生成apk文件等等。为了简化构建过程并提供这些特定的任务和功能，Google开发了一个名为Android Gradle插件的Gradle插件。这个插件与Gradle一起使用，以便更轻松地构建和打包Android应用程序
+
+Android Gradle插件中含有Gradle插件API，可以自己编写适合当前应用的插件，为应用程序提供自定义构建逻辑
+
+因此，Android Gradle插件只是是Gradle构建工具的一个扩展，使得可以更轻松地构建和打包Android应用程序。
+
+- 处理资源文件
+- 生成R.java文件
+- 合并清单文件
+- 签名APK文件
+- 生成APK文件
 
 
 
+**build.gradle内容详解：**
 
 
 
+build类型：自定义设置应用构建打包时使用的属性，从而生成调试版/发布版的APK/AAB，用来调试或发布，其中调试版会用调试密匙为应用签名，而发布版会用发布密匙为应用签名；因为发布版会应用代码混淆、资源缩减等操作，所以体积会比调试版小不少
+
+产品变种：同一份工程代码，build.gradle中自定义设置，使之生成不同类型、不同体积的APK/AAB,比如免费版和收费版apk
+
+build变体：产品变种和build类型结合的结果，在build.gradle中使用特定规则将产品变种和build类型结合起来的结果；比如产品变种有person和plus两个版本，然后build类型有debug和release两个类型，那么总的build变体就有四种结果：persondebug、personrelease、plusdebug、plusrelease
+
+清单条目：好像是在清单条目中设置值可以覆盖AndroidManifest.xml文件中的设置
+
+签名：调试版可以自动生成，也可以手动在build配置中自行配置；发布版不会自动生成签名，需要在google申请密匙，然后将密匙和证书放到build配置中，才能上传到google应用商店
+
+代码和资源缩减：在ProGuard规则文件中给每个build变体指定相应规则，规则会缩减生成apk/AAB体积，还不影响原有功能
+
+多apk支持：就是设置规则，例如每种屏幕密度或语言构建一种apk，这样不太好，而且目前都是只生成一个AAB上传到google商店
+
+build 配置文件：里面用领域特定语言 (DSL) 以 Groovy 动态描述和操作构建apk/aab的逻辑；到这步其实就是代码完成之后，对应用的一种配置，一种优化
+
+顶层settings.gradle：里面就是声明应用使用了哪些模块，比如：
+
+include ‘:app’
+
+include ':project'
+
+顶层gradle.properties：定义gradle守护堆大小，全局gradle设置，比如android.enableJetifier=true
+
+顶层local.properties：定义本地SDK路径
+
+顶层build.gradle：声明所有模块共用的依赖、变量、清理build文件的代码，比如：
+
+顶层versions.gradle：声明应用需要的外部依赖及其版本号，别的地方需要依赖直接在这拿就行，统一在这个文件管理依赖
+
+def xxxx = [:]
+
+build_versions.min_sdk = 33 
+
+androidx.core_ktx = "androidx.core:core-ktx:1.7.0"
+
+使用：build_versions.min_sdk
+
+模块build.gradle：每个模块单独需要的配置，自定义build类型和产品变种、覆盖顶层build.gradle的设置
+
+配置完后Sync Project同步项目文件，使项目导入已定义的配置和执行一些gralde检查
 
 
 
-
-
-
-
-
-
-
-
-
-
+源代码集：每当给项目创建一个模块后模块内都有一个main/目录，这个就是主源代码集，里面有源代码和资源，这个属于主源代码集，如果项目需要创建build变体，最好再定义src/productFlavor/这样类似的源代码集，在里面放专属相应build变体的代码资源
 
 
 
