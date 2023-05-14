@@ -144,17 +144,19 @@ startActivity(intent)
 
 ## View原理与自定义
 
-> view在Android中很重要，在实现自定义控件时，会发生滑动冲突问题，解决这个问题就得明白view的事件分发机制与view的内部原理；总的来说就是使用view会发生问题，发生问题就得明白它，然后完美解决它
+> view在Android中很重要，在实现自定义控件时，会发生滑动冲突(事件处理冲突)问题，解决这个问题就得明白view的事件分发机制、事件处理机制即view的内部原理；总的来说就是自定义view会发生问题，发生问题前就得明白它，然后完美解决它
 
 **View是什么？**其实可以说是一个控件，它包含了微件(Button,TextView..)和ViewGroup，为甚这么说呢，是因为它们的都继承View类
 
 **View位置坐标：**weight、height、left、top、right、bottom、x、y、translationX、translationY
 
+其中translationX、translationY值用于平移View时更改的值，它是View相对于父容器的偏移量；平移时不会更改left、right这样的值，变的是x、y、translationX、translationY偏移量的值
+
 **View事件：**
 
 - MotionEvent(ACTION_DOWN、ACTION_MOVE、ACTION_UP)
-- TouchSlop(滑动的最小距离)
-- VeIocityTracker(手指滑动速度)
+- TouchSlop(系统识别滑动的最小距离，手指滑动屏幕距离小于这个值就认为是点击)
+- VeIocityTracker(手指滑动速度，分为水平和垂直方向速度)
 - GestureDetector(检测手指单击、滑动、长按、双击等行为)
 - ScroIIer(由于scrollTo/scrollBy的滑动是瞬间完成的，用这个可以给滑动添加过渡效果)
 
@@ -162,11 +164,11 @@ startActivity(intent)
 
 - scrollTo/scrollBy   适用于简单的View内容滑动
 
-  它们的使用只能改变View的内容在View内的位置，不能改变View在布局中的位置；scrollBy属于绝对滑动，scrollTo属于相对滑动；scrollTo源码方法中的mScrollX和mScrollY为View左边缘和内容左边缘距离、View右边缘到内容右边缘距离；scrollBy实际是调用scrollTo来实现
+  它们的使用**只能改变View的内容在View内的位置，不能改变View在布局中的位置**；scrollBy属于相对滑动，scrollTo属于绝对滑动；scrollTo源码方法中的mScrollX和mScrollY为View左边缘和内容左边缘距离、View右边缘到内容右边缘距离；scrollBy本质是调用scrollTo来实现
 
-- 添加动画   使用于没有交互的View动画效果
+- 添加动画   适用于没有交互的View动画效果
 
-  就是操作View的translationX/Y属性，有两种动画方式，第一种原始动画就是在xml中定义动画标签，第二种属性动画就是在代码中使用一些动画库来实现；注意在实现动画的时候注意View的真正位置
+  就是操作View的**translationX/Y属性**，有两种动画方式，第一种原始动画就是在xml中定义动画标签，第二种属性动画就是在代码中使用一些动画库来实现；注意在实现动画的时候注意View的真正位置
 
 - 改变View的LayoutParams参数改变原始布局   适用于有交互的布局或动画效果
 
@@ -177,12 +179,18 @@ startActivity(intent)
   params.height += 10
   ```
 
+| 滑动方式                   | 特点                                                     |
+| -------------------------- | -------------------------------------------------------- |
+| scrollTo/scrollBy          | 实现View的内容滑动；滑动效果不影响View内部单击事件；     |
+| 动画                       | 可以实现View复杂滑动效果；在实现时得注意View的真正位置； |
+| 改变View的LayoutParams参数 | 适用于有交互情况的View                                   |
+
 **View弹性滑动：** 上面的滑动是让View咻地一下过去，没有过渡效果
 
-- ScroIIer 源码分析噢噢噢噢
+- ScroIIer
 
   ```kotlin
-  toSecontBtn.scrollBy(20,30)//让button中内容向坐上移动一点距离
+  toSecontBtn.scrollBy(20,30)//让button中内容向左上移动一点距离
   ```
 
   Scroller本身其实不能实现弹性滑动，它得结合computeScroll方法，这个方法会让View不断重新绘制，这个绘制才是实现弹性滑动的根本原理
@@ -203,7 +211,11 @@ startActivity(intent)
 
 **View事件分发机制：** 事件分发机制主要就是为了更好实现自定义View，避免滑动冲突等问题出现
 
-点击事件的传递规则就是得明白MotionEvent的点击事件分发，这个点击事件分发其实就是得明白一个MotionEvent事件产生后是怎么由Activity传递到具体View的过程；这里涉及三个方法dispatchTouchEvent、onInterceptTouchEvent和onTouchEvent
+点击事件的传递规则就是MotionEvent的点击事件分发，点击事件分发其实就是得明白一个MotionEvent事件产生后是怎么由Activity传递到具体View的过程；这里涉及三个方法dispatchTouchEvent、onInterceptTouchEvent和onTouchEvent
+
+- dispatchTouchEvent 事件传递时最先调用，返回结果受当前onTouchEvent和下面onInterceptTouchEvent方法的结果影响，表示是否调度此事件
+- onInterceptTouchEvent 用返回结果来表示当前View是否拦截事件，true表示拦截
+- onTouchEvent 事件被上面方法拦截后会调这个方法处理事件，这个方法的返回值表示是否处理当前事件
 
 这三个方法的在每个View中都有，即当事件来到此View，那么dispatchTouchEvent方法一定会被调用，然后调用onInterceptTouchEvent这个方法来判断此View是否拦截事件，如果拦截就把事件交给onTouchEvent处理，如果不拦截即返回false就继续将事件传递给此View的子View
 
@@ -213,29 +225,142 @@ public boolean dispatchTouchEvent(MotionEvent ev) {//原理的伪代码过程
    if (onInterceptTouchEvent(ev)) {
         consume = onTouchEvent(ev);
    } else {
-        consume = child.dispatchTouchEvent(ev);
+        consume = child.dispatchTouchEvent(ev);//当前View不拦截事件，事件继续传递给子View
    }
     return consume;
 }
 ```
 
-注意如果此View拦截并设置有OnTouchListener，那这个就像个大哥一样会处理事件，如果他处理不了返回false才会把事件叫给onTouchEvent小弟处理
+注意：如果此View拦截并设置有OnTouchListener，那这个就像个大哥一样会处理事件，如果他处理不了返回false才会把事件叫给onTouchEvent小弟处理
 
-事件分发过程，首先事件是右Activity给Window，再给顶级View，最后才是分发给具体的子View处理；所以会发现一个事，当具体子View处理不了事件，即onTouchEvent返回false后，很可能事件会回退到Activity中的onTouchEvent来处理
+事件分发过程，首先事件是由Activity给Window，再给顶级View，然后才进行分发事件给具体的子View处理；所以会发现一个事，当具体子View处理不了事件，即onTouchEvent返回false后，很可能事件会回退到Activity中的onTouchEvent来处理
 
 注意：
 
-- 这里说的事件指down、move、up一次的系列事件
+- 这里说的事件指down、move...move、up的系列事件
 - 如果一个View拦截并处理事件中的其中一个，那么说明此系列事件都由此View接受处理
-- onInterceptTouchEvent只在这个系列事件中第一个判断时调用
-- 如果down事件到此View的onTouchEvent返回false则说明它处理不了，这时系列事件中后面事件都右它的父元素处理
-- ViewGroup默认不拦截事件，ViewGroup中onInterceptTouchEvent方法默认返回false
-- View没有onInterceptTouchEvent方法，所以事件给它就会直接调用onTouchEvent方法
+- onInterceptTouchEvent只在这个系列事件中第一次判断时调用
+- 如果down事件到此View的onTouchEvent返回false则说明它处理不了，这时系列事件中后面事件都交给它的父View处理，**注意！**
+- ViewGroup默认不拦截事件，源码中ViewGroup中onInterceptTouchEvent方法默认返回false
+- 若View没有onInterceptTouchEvent方法，所以事件给它就会直接调用onTouchEvent方法
 
 **View事件分发机制细节：**
 
-1. 事件一般是说MotionEvent，它最初是由Activity的dispatchTouchEvent接收调度，这个方法内部有个window的调用方法getWindow().superDispatchTouchEvent(ev))，实际上就是PhoneWindow实现类将事件传递给一个mDecor，这个mDecor就是activity中setContentView方法中设置的View，到这就完成了从activity到顶层View的事件传递
-2. 到这事件已经来到顶层View(ViewGroup)，这时ViewGroup中的onInterceptTouchEvent如果返回true则事件给它的onTouchEvent处理，如果返回false说明ViewGroup不拦截事件，事件继续传递给里面具体子View进行调度，拦截，处理
+1. 事件一般是说MotionEvent，它最初是由Activity的dispatchTouchEvent接收调度，这个方法内部有个window的调用方法getWindow().superDispatchTouchEvent(ev))，实际上就是PhoneWindow实现类将事件传递给一个mDecor，这个mDecor就是activity中setContentView方法中设置的View，到这就**完成了从activity到顶层View的事件传递**
+
+2. 到这事件已经来到顶层View(ViewGroup)，这时ViewGroup中的onInterceptTouchEvent如果返回true则拦截事件给它的onTouchEvent处理，如果返回false说明ViewGroup不拦截事件，事件继续传递给里面具体子View进行调度，拦截，处理
+
+   ```java
+   //ViewGroup 中dispatchTouchEvent方法中关键源码
+   
+   // Handle an initial down.
+               if (actionMasked == MotionEvent.ACTION_DOWN) {
+                   // Throw away all previous state when starting a new touch gesture.
+                   // The framework may have dropped the up or cancel event for the previous gesture
+                   // due to an app switch, ANR, or some other state change.
+                   cancelAndClearTouchTargets(ev);
+                   resetTouchState();
+               }
+   
+   // Check for interception.
+               final boolean intercepted;
+               if (actionMasked == MotionEvent.ACTION_DOWN
+                       || mFirstTouchTarget != null) {
+                   final boolean disallowIntercept = (mGroupFlags & FLAG_DISALLOW_INTERCEPT) != 0;
+                   if (!disallowIntercept) {
+                       intercepted = onInterceptTouchEvent(ev);
+                       ev.setAction(action); // restore action in case it was changed
+                   } else {
+                       intercepted = false;
+                   }
+               } else {
+                   // There are no touch targets and this action is not an initial down
+                   // so this view group continues to intercept touches.
+                   intercepted = true;
+               }
+   ```
+
+3. 上面是ViewGroup 中dispatchTouchEvent方法中关键源码，其中有一点很重要，首先如果ViewGroup不拦截事件处理而是交给子View处理，那mFirstTouchTarget就指向子View，就不为空；反之就为空，为空的话如果当前ViewGroup如果有move和up事件来的话就会默认交给它处理
+
+   然后注意从resetTouchState();这个调用可以清楚，每次down事件来都会重置FLAG_DISALLOW_INTERCEPT状态，这个状态值是子View设置的，所以每次down事件会重置它，从而每次当前的ViewGroup会判断是否拦截新的down事件   **很重要**
+
+   ```java
+   // 当前View不处理事件，事件分发给子View
+   final int childrenCount = mChildrenCount;
+                       if (newTouchTarget == null && childrenCount != 0) {
+                           final float x =
+                                   isMouseEvent ? ev.getXCursorPosition() : ev.getX(actionIndex);
+                           final float y =
+                                   isMouseEvent ? ev.getYCursorPosition() : ev.getY(actionIndex);
+                           // Find a child that can receive the event.
+                           // Scan children from front to back.
+                           final ArrayList<View> preorderedList = buildTouchDispatchChildList();
+                           final boolean customOrder = preorderedList == null
+                                   && isChildrenDrawingOrderEnabled();
+                           final View[] children = mChildren;
+                           for (int i = childrenCount - 1; i >= 0; i--) {
+                               final int childIndex = getAndVerifyPreorderedIndex(
+                                       childrenCount, i, customOrder);
+                               final View child = getAndVerifyPreorderedView(
+                                       preorderedList, children, childIndex);
+   
+                               // If there is a view that has accessibility focus we want it
+                               // to get the event first and if not handled we will perform a
+                               // normal dispatch. We may do a double iteration but this is
+                               // safer given the timeframe.
+                               if (childWithAccessibilityFocus != null) {
+                                   if (childWithAccessibilityFocus != child) {
+                                       continue;
+                                   }
+                                   childWithAccessibilityFocus = null;
+                                   i = childrenCount;
+                               }
+   
+                               if (!child.canReceivePointerEvents()
+                                       || !isTransformedTouchPointInView(x, y, child, null)) {
+                                   ev.setTargetAccessibilityFocus(false);
+                                   continue;
+                               }
+   
+                               newTouchTarget = getTouchTarget(child);
+                               if (newTouchTarget != null) {
+                                   // Child is already receiving touch within its bounds.
+                                   // Give it the new pointer in addition to the ones it is handling.
+                                   newTouchTarget.pointerIdBits |= idBitsToAssign;
+                                   break;
+                               }
+   
+                               resetCancelNextUpFlag(child);
+                               if (dispatchTransformedTouchEvent(ev, false, child, idBitsToAssign)) {
+                                   // Child wants to receive touch within its bounds.
+                                   mLastTouchDownTime = ev.getDownTime();
+                                   if (preorderedList != null) {
+                                       // childIndex points into presorted list, find original index
+                                       for (int j = 0; j < childrenCount; j++) {
+                                           if (children[childIndex] == mChildren[j]) {
+                                               mLastTouchDownIndex = j;
+                                               break;
+                                           }
+                                       }
+                                   } else {
+                                       mLastTouchDownIndex = childIndex;
+                                   }
+                                   mLastTouchDownX = ev.getX();
+                                   mLastTouchDownY = ev.getY();
+                                   newTouchTarget = addTouchTarget(child, idBitsToAssign);
+                                   alreadyDispatchedToNewTouchTarget = true;
+                                   break;
+                               }
+   
+                               // The accessibility focus didn't handle the event, so clear
+                               // the flag and do a normal dispatch to all children.
+                               ev.setTargetAccessibilityFocus(false);
+                           }
+                           if (preorderedList != null) preorderedList.clear();
+                       }
+   ```
+
+4. 当前ViewGroup不拦截处理事件后会事件分发给子view，
 
 **View滑动冲突：** 滑动冲突的场景一般是在有两层可交互的的View叠加，在用户操作的时候发生预料之外的现象
 
