@@ -100,11 +100,11 @@
 
 - 开闭原则：对扩展开放，对修改关闭，尽可能少地修改源代码。上面的原则其实都是为了开闭原则服务的，都是工具。
 
-![](../IMG/MyThink.png)
+![](../../IMG/MyThink.png)
 
 设计原则小示例：
 
-![](../IMG/openOff.png)
+![](../../IMG/openOff.png)
 
 ```java
 public interface IBook {
@@ -179,7 +179,7 @@ public class OffNoveIBook extends NoveIBook {
 
 > 懒汉式、饿汉式，构造方法私有，获取实例加synchronized
 
-![Singleton](../IMG/Singleton.png)
+![Singleton](../../IMG/Singleton.png)
 
 ```java
 //饿汉式
@@ -262,7 +262,7 @@ public class Singleton {
 >
 > 将一个类的实例化延迟到子类，每个产品都有一个单独的工厂
 
-![](../IMG/Factory.png)
+![](../../IMG/Factory.png)
 
 ```java
 public interface Factory {
@@ -305,7 +305,7 @@ public class ClientDemo {
 
 > 和工厂模式不同的是抽象工厂模式有多个产品，处理时是封装对产品组进行对象创建，处理
 
-![](../IMG/AbstractFactory.png)
+![](../../IMG/AbstractFactory.png)
 
 ```java
 public interface Factory {
@@ -358,7 +358,7 @@ public class ClientDemo {
 
 > 产品本身只有属性，产品的组成和操作放在建造者那处理，对了，建造者由导演控制那些操作
 
-![]( ../IMG/Build.png)
+![]( ../../IMG/Build.png)
 
 ```java
 //产品抽象类
@@ -411,7 +411,7 @@ public class Director{
 
 > clone原型的对象来进行不同的处理，比new对象效率高，因为这是直接克隆一份内存二进制流
 
-![](../IMG/prototype.png)
+![](../../IMG/prototype.png)
 
 ```java
 public interface Product extends Cloneable {
@@ -463,7 +463,7 @@ public class Client {
 
 > 为其他对象提供一种代理以控制对这个对象的访问。代理类可以在目标对象做的事情前后做一些事情，本身的真实角色就是被代理类有自己的业务操作，代理类就是在被代理类的基础上做另外的操作。
 
-![](../IMG/Proxy.png)
+![](../../IMG/Proxy.png)
 
 静态代理：
 
@@ -549,7 +549,7 @@ public class SimpleJDKDynamicProxyDemo {
 
 > 利用继承来给具体构件增加另外的功能操作。其实和代理模式差不多，只是这个有继承关系的参与
 
-![](../IMG/Decorator.png)
+![](../../IMG/Decorator.png)
 
 ```java
 public interface Component {
@@ -602,7 +602,7 @@ public class Client {
 
 > 前提是当一个对象或类的接口不能匹配用户所期待的接口时，用适配器，将一个接口或类转换为另一个接口或类，其实就是在实现接口时重写的那个方法中用super调用适配器类的父类的方法。也就是用适配器实现接口方法去执行原来的继承类中的方法，实现适配两个没有关系类的效果
 
-![](../IMG/Adaper.png)
+![](../../IMG/Adaper.png)
 
 ```java
 public class Adaptee {
@@ -634,7 +634,7 @@ public class Client {
 
 > 用对象组成树型结构，主要解决含有树形结构的问题，比如树枝叶子，公司职位树，文件系统
 
-![](../IMG/Composite.png)
+![](../../IMG/Composite.png)
 
 ```java
 //定义抽象构件接口
@@ -701,7 +701,7 @@ public class Client {
 
 > 将抽象和实现解耦，两个维度可以自己扩展，从而扩展更大的功能版图；实现扩展性、灵活性
 
-![](../IMG/Bridge.png)
+![](../../IMG/Bridge.png)
 
 ```java
 //实现化角色
@@ -764,7 +764,7 @@ public class Client {
 
 > 有多个子系统(子类)需要有一个代表(外观)来封装控制操作，然后如果要启动子系统(执行里面动作)就直接找代表就行
 
-![](../IMG/Facade.png)
+![](../../IMG/Facade.png)
 
 ```java
 public class Client {
@@ -818,7 +818,7 @@ public class ClassC {
 
 > 元就是池子里面的，元是不重复的，可以复用的，比如五子棋盘上的黑白棋子
 
-![](../IMG/Flyweight.png)
+![](../../IMG/Flyweight.png)
 
 ```java
 public interface Flyweight {
@@ -865,7 +865,7 @@ public class FlyweightFactory {
 
 > 父类抽象类中有基本方法和模板方法，基本方法由子类继承实现，模板方法相当于封装核心处理，子类来扩展可变的部分，符合开闭原则
 
-![](../IMG/Template.png)
+![](../../IMG/Template.png)
 
 ```java
 public abstract class AbstractClass {
@@ -899,7 +899,7 @@ public class Client {
 
 > 调用者类和实际执行者类没有关系(迪米特原则)，但是调用者类可以用那个命令接口的实现类作为媒介来命令控制实际执行者。  解耦和，其实意思就是调用类用一个命令类来让接受者干啥，然后这个命令类可以有多个，让多个实现子类实现命令接口就行
 
-![](../IMG/Command.png)
+![](../../IMG/Command.png)
 
 ```java
 public interface Command {
@@ -954,7 +954,7 @@ public class Client {
 
 > 抽象处理者持有具体处理者的引用，多个具体处理者排成一条链，有序地排队处理，直到处理完成
 
-![](../IMG/Chain.png)
+![](../../IMG/Chain.png)
 
 ```java
 public abstract class Handler {
@@ -996,7 +996,7 @@ public class Client {
 
 > 抽象策略类和多个策略子类，每个策略子类都有各自的策略算法，这些策略还可以相互替换，实现了定义算法和使用算法分离
 
-![](../IMG/Strategy.png)
+![](../../IMG/Strategy.png)
 
 ```java
 //抽象策略类
@@ -1032,7 +1032,7 @@ public class Context {
 
 > 创建一个对象来访问容器集合中元素，这个对象就是迭代器，可以说是一个工具类
 
-![](../IMG/Iterator.png)
+![](../../IMG/Iterator.png)
 
 ```java
 public interface Iterator {
@@ -1094,7 +1094,7 @@ public class ConcreteAggregate implements Aggregate {
 >
 > 就像房产中介和卖家买家
 
-![](../IMG/Mediator.png)
+![](../../IMG/Mediator.png)
 
 ```java
 //抽象中介者
@@ -1194,7 +1194,7 @@ public class ConcreteColleague2 extends Colleague {
 >
 > 这个也同上可以是一对多的关系，一对一的关系比较少，要用就用一对多，不然多浪费这个模式
 
-![](../IMG/Observer.png)
+![](../../IMG/Observer.png)
 
 ```java
 public interface Subject {
@@ -1264,7 +1264,7 @@ public class Client {
 >
 > 不破坏封装性又能快照
 
-![](../IMG/Memo.png)
+![](../../IMG/Memo.png)
 
 ```java
 //需要保存状态的原始类
@@ -1341,7 +1341,7 @@ public class Client {
 >
 > 这个模式很有意思，它这样把操作自己的东西放到别的对象里面
 
-![](../IMG/Visitor.png)
+![](../../IMG/Visitor.png)
 
 ```java
 public abstract class Hardware {
@@ -1444,7 +1444,7 @@ public class Client {
 >
 > 多态用得好
 
-![](../IMG/State.png)
+![](../../IMG/State.png)
 
 ```java
 //抽象状态
@@ -1522,7 +1522,7 @@ public class Client {
 
 > 用解释器搭配一种文法(新语言到计算机能识别的东西的映射语句)，然后解释处理新语言
 
-![](../IMG/Interpreter.png)
+![](../../IMG/Interpreter.png)
 
 ```java
 public interface ArithmeticExpression {

@@ -315,9 +315,21 @@ myInterface.print("Hello"); // 输出 "Hello"
 
 ## Kotlin
 
+> 可玩性比java丰富，基于java，比java简明
 
+**基本的不同就是：**
 
-
+- Kotlin中所有东西都是对象
+- 函数定义用fun
+- 语句后面不用写分号结尾
+- 函数返回值放后面
+- 定义变量用var/val，类型用：XX
+- 字符串定义多个字符串模板
+- 空值检测在类型后面加？
+- 类型用is检测是true后自动转换类型
+- for循环不用java那样，在for括号中用in；还可以在for括号中用in区间，step等
+- 用when 和 -> 代替java中的switch cash
+- 
 
 **静态方法：**
 
@@ -389,15 +401,22 @@ myInterface.print("Hello"); // 输出 "Hello"
   }
   ```
 
-  
+- alse  前面执行完后再顺带执行这个
 
-
+  ```kotlin
+  //交换两个变量
+  var a = 1
+  var b = 2
+  a = b.alse { b = a }
+  ```
 
 ## Python
 
 
 
 ## Linux
+
+
 
 
 
