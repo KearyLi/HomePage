@@ -160,9 +160,9 @@ startActivity(intent)
 
 > view在Android中很重要，在实现自定义控件时，会发生滑动冲突(事件处理冲突)问题，解决这个问题就得明白view的事件分发机制、事件处理机制即view的内部原理；总的来说就是自定义view会发生问题，发生问题前就得明白它，然后完美解决它
 
-**View是什么？**其实可以说是一个控件，它包含了微件(Button,TextView..)和ViewGroup，为甚这么说呢，是因为它们的都继承View类
+**View是什么？** 其实可以说是一个控件，它包含了微件(Button,TextView..)和ViewGroup，为甚这么说呢，是因为它们的都继承View类
 
-**View位置坐标：**weight、height、left、top、right、bottom、x、y、translationX、translationY
+**View位置坐标：** weight、height、left、top、right、bottom、x、y、translationX、translationY
 
 其中translationX、translationY值用于平移View时更改的值，它是View相对于父容器的偏移量；平移时不会更改left、right这样的值，变的是x、y、translationX、translationY偏移量的值
 
