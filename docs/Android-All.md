@@ -1,14 +1,28 @@
 # Android
+- [Android](#android)
+  - [Camera2](#camera2)
+  - [Activity](#activity)
+  - [View原理与自定义](#view原理与自定义)
+  - [AsyncTask 异步](#asynctask-异步)
+  - [Handler 机制](#handler-机制)
+  - [Binder 机制](#binder-机制)
+  - [配置测试发布](#配置测试发布)
+  - [1. 设置开发环境](#1-设置开发环境)
+  - [2. 编写代码](#2-编写代码)
+  - [3. 构建运行](#3-构建运行)
+- [其它技术](#其它技术)
+  - [Protocol Buffers](#protocol-buffers)
+  - [Retrofit](#retrofit)
+  - [OkHttp](#okhttp)
+  - [SQLite](#sqlite)
 
-> 小小操作系统
-
-activity 就是掌握生命周期
-
-fragment 和activity生命周期的区别和联系，怎么添加fragment，fragment和activity通信
-
-service 也是在生命周期是做事情，activity绑定service进行通信，IntentService异步可自动退出的服务
-
-broadcastRecevier
+> activity 就是掌握生命周期
+>
+> fragment 和activity生命周期的区别和联系，怎么添加fragment，fragment和activity通信
+>
+> service 也是在生命周期是做事情，activity绑定service进行通信，IntentService异步可自动退出的服务
+>
+> broadcastRecevier
 
 ## Camera2
 
