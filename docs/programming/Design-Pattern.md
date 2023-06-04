@@ -1,13 +1,13 @@
 # 设计模式
 > 抓住本质，理解思想，举一反三
 >
-> 结合经验与书籍总结《设计模式》《秒懂设计模式》《大话设计模式》 
+> 结合经验与书籍总结《设计模式》《大话设计模式》 
 
-设计模式思考：<br>问：感觉有的设计模式差不多啊？<br/>答：不对<br>问：原型模式用return this行吗？<br/>答：肯定不行啊，那不还是返回自己的引用，也没clone新的一份。
+设计模式思考：<br>问：感觉有的设计模式差不多啊？<br/>答：其实虽然看起来差不多，但是它适用场景和实现思想是有区别的。<br>问：原型模式用return this行吗？<br/>答：肯定不行啊，那不还是返回自己的引用，也没clone新的一份。
 
-慢慢地发现每种设计模式都是最大限度地体现六大设计原则。
+慢慢会发现每种设计模式都是以不同种方式去最大限度地体现**六大设计原则**。
 
-设计模式就是：本来代码处理一个问题用一堆杂乱代码解决，但是有设计模式的参与下，只需要一点代码加一点巧妙逻辑也能解决，让代码更工程化。
+设计模式就是：本来代码处理一个问题用一堆杂乱代码解决，但是有设计模式的参与下，只需要一点代码加一点巧妙逻辑也能解决，主要让代码更工程化。
 
 
 - [设计模式](#设计模式)
@@ -46,17 +46,17 @@
 
 ## 1. 概念
 
-一套代码设计、代码体系结构的经验总结，和只会调用api工具箱的工程师不同，这个主要是面向框架，让代码编制更加工程化，让项目更加有可靠性、可扩展性、可重用性、可维护性、可移植性等特点，设计模式是用面向接口编程来降低耦合的。后面就会发现会用到很多接口来参与设计。
+一套代码设计、代码体系结构的经验总结，和只会调用api工具箱不同，这个主要是思想，面向框架，让代码编制更加工程化，提升项目的可靠性、可扩展性、可重用性、可维护性、可移植性，设计模式是用面向接口编程来降低耦合的。后面就会发现会用到很多接口来参与设计。
 
-软件产品的不断迭代更新，设计模式根据各种场景提供了最优的设计方式，让每个模块最大限度得到复用及扩展。设计模式其实不是什么技术，而是软件工程一种思想，一种格局。
+软件产品的不断迭代更新，设计模式根据各种场景提供了最优的设计方式，让每个模块最大限度得到复用及扩展。设计模式其实不是什么技术，而是软件工程**一种思想，一种格局**。
 
-面向对象：实际存在的现实实物就是对象，计算机中由类(模型)来创建对象，发现造物的过程中模型之间有千丝万缕的关系，就像人与房屋有关系(对象就是小明住在202)，所以在代码设计中就得考虑用面向对象的三大特性(封装、继承、多态)来处理这千丝万缕的关系。 
+面向对象：实际存在的现实实物就是对象，计算机中由类(模型)来创建对象，发现造物的过程中模型之间有千丝万缕的关系，就像人与房屋有关系(对象就是小明住在202)，所以在代码设计中就得考虑用面向对象的三大特性**(封装、继承、多态)**来处理这千丝万缕的关系。 
 
-- 封装就是将变量和方法放在一个类中，然后给这个类提供接口访问类中的东西，这样的类就干净整洁，但是不能把不相关的东西封装在一起，所以封装也得适度；
+- **封装**就是将变量和方法放在一个类中，然后给这个类提供接口访问类中的东西，这样的类就干净整洁，但是不能把不相关的东西封装在一起，所以封装也得适度；
 
-- 继承就是避免出现重复代码，使用现有类功能，子类有父类的东西，子类可以重写、扩展父类的东西；
+- **继承**就是避免出现重复代码，使用现有类功能，子类有父类的东西，子类可以重写、扩展父类的东西；
 
-- 多态就是父类的引用可以指向本类对象或者子类的对象。面向接口编程的重要性在这可以体现了。
+- **多态**就是父类的引用可以指向本类对象或者子类的对象。面向接口编程的重要性在这可以体现了。
 
 ## 2. 背景
 
@@ -65,7 +65,7 @@
 设计模式格式：当设计出一个设计模式后，你想要全国的人知道，然后你讲解，你就带按照这个格式描述你的设计模式，这就是GoF格式。
 
 - 模式名：有意义、简短而准确地描述设计模式，让人们交流起来方便，可以直接体现内涵的名字；
-- 问题：该设计模式的出现，是为了解决什么问题下使用，和使用了这个设计模式会有怎样的结果；
+- 问题：该设计模式的出现，是为了解决什么问题，和使用了这个设计模式会有怎样的结果；
 - 环境：这个设计模式在什么环境下使用，这个设计模式的使用范围；
 - 解决方案：这个设计的组成，之间是怎样协作的，每个成分的职责是什么，用一个抽象的描述来处理不同实际问题；
 - 效果：用这个设计模式处理这个问题的结果怎样，有哪些弊端，有哪些时间空间上的优势；
@@ -96,7 +96,7 @@
 
   如果一个接口在被实现后有部分方法没使用，则这个接口应该被拆分。
 
-- 迪米特原则：一个对象应当对其他对象尽可能少地了解。就是A类和B类有联系，B类和C类有联系，这样如果A类想和C类交流，就直接和B类交流就行，没必要再去找C类。
+- 迪米特原则：一个对象应当对其他对象尽可能少地了解。降低模块耦合度，提高模块内聚性，就是A类和B类有联系，B类和C类有联系，这样如果A类想和C类交流，就直接和B类交流就行，没必要再去找C类。
 
 - 开闭原则：对扩展开放，对修改关闭，尽可能少地修改源代码。上面的原则其实都是为了开闭原则服务的，都是工具。
 
@@ -112,13 +112,13 @@ public interface IBook {
     public double getPrice();
     public String getAuthor();
 }
-//----------------打折促销两种方式
+// ----------------打折促销的两种方式
 public class NoveIBook implements IBook {
-    //书名
+    // 书名
     private String name;
-    //价格
+    // 价格
     private double price;
-    //author
+    // author
     private String author;
     public NoveIBook() {
     }
@@ -140,12 +140,12 @@ public class NoveIBook implements IBook {
         return author;
     }
 }
-//----------------
+// ----------------
 public class BookStore {
     private ArrayList<IBook> bookList = new ArrayList<>();
     public BookStore() {
-        bookList.add(new OffNoveIBook("西游记",23,"吴承恩"));    //修改时就改这里OffNoveIBook
-        bookList.add(new OffNoveIBook("红楼梦",32,"曹雪芹"));    //改成NoveIBook
+        bookList.add(new OffNoveIBook("西游记",23,"吴承恩"));    // 修改时就改这里OffNoveIBook
+        bookList.add(new OffNoveIBook("红楼梦",32,"曹雪芹"));    // 改成NoveIBook
     }
     public void showBookList() {
         System.out.println("----     书店列表     ----");
@@ -159,7 +159,7 @@ public class BookStore {
         bookStore.showBookList();
     }
 }
-//----------------增加活动打折方案
+// ----------------增加活动打折方案
 public class OffNoveIBook extends NoveIBook {
     public OffNoveIBook(String name, int price, String author) {
         super(name, price, author);
@@ -182,12 +182,12 @@ public class OffNoveIBook extends NoveIBook {
 ![Singleton](../../IMG/Singleton.png)
 
 ```java
-//饿汉式
+// 饿汉式
 public class Singleton {
-    //太饿了，先实例化
+    // 太饿了，先实例化
     private static Singleton singleton_instance = new Singleton();
 
-    //构造函数私有
+    // 构造函数私有
     private Singleton() {
     }
 
@@ -195,28 +195,28 @@ public class Singleton {
         return singleton_instance;
     }
 }
-//懒汉式
+// 懒汉式
 public class Singleton {
     private static Singleton singleton_instance = null;
 
-    //构造函数私有，不让外面创建实例
+    // 构造函数私有，不让外面创建实例
     private Singleton() {
     }
 
-    //方法同步
+    // 方法同步
     synchronized public static Singleton getInstance() {
         if (singleton_instance == null) {
-            singleton_instance = new Singleton();//太懒，用的时候才初始化
+            singleton_instance = new Singleton();// 太懒，用的时候才初始化
         }
         return singleton_instance;
     }
 }
 
-//优点：减少内存和系统开销，创建只创建一次，在内存中也只有一份。
-//缺点：构造函数都被私有了,无法拓展子类。
-//注意：使用单例得注意有状态单例和无状态单例，有状态单例会在分布式系统中存在多份实例，还有序列化的问题。
+// 优点：减少内存和系统开销，创建只创建一次，在内存中也只有一份。
+// 缺点：构造函数都被私有了,无法拓展子类。
+// 注意：使用单例得注意有状态单例和无状态单例，有状态单例会在分布式系统中存在多份实例，还有序列化的问题。
 
-//懒加载更好运行效率的方式，加“双检锁”
+// 懒加载更好运行效率的方式，加“双检锁”
 public class Singleton {
     private static volatile Singleton singleton_instance = null;
 
@@ -225,8 +225,8 @@ public class Singleton {
 
     public Singleton getInstance() {
         if (singleton_instance == null) {
-            //在这加锁就是为了运行效率，如果一个线程创建了实例就不用走这了，不用让线程等待，
-            //直接用之前线程创建的实例
+            // 在这加锁就是为了运行效率，如果一个线程创建了实例就不用走这了，不用让线程等待，
+            // 直接用之前线程创建的实例
             synchronized (Singleton.class) {
                 if (singleton_instance == null) {
                     singleton_instance = new Singleton();
@@ -236,15 +236,15 @@ public class Singleton {
         return singleton_instance;
     }
 }
-//饿汉式优点就是保证唯一性，但是在系统启动时加载时间会比较长
-//懒汉式优点就是系统启动快，实例延迟加载，但是得用“双检锁”来解决多线程访问的问题
+// 饿汉式优点就是保证唯一性，但是在系统启动时加载时间会比较长
+// 懒汉式优点就是系统启动快，实例延迟加载，但是得用“双检锁”来解决多线程访问的问题
 
-//使用场景：1整个项目中共享数据，2创建一个对象消耗的资源过多
+// 使用场景：1整个项目中共享数据，2创建一个对象消耗的资源过多
 
-//静态内部类保证线程安全，它的线程安全是虚拟机的一个加载类机制实现的
+// 静态内部类保证线程安全，它的线程安全是虚拟机的一个加载类机制实现的
 public class Singleton {
     private static class SingletonHolder {
-        public static Singleton instance = new Singleton();//看着像饿加载，其实是懒加载，下面调用的时候这个内部类才加载进内存
+        public static Singleton instance = new Singleton();// 看着像饿加载，其实是懒加载，下面调用的时候这个内部类才加载进内存
     }
     private Singleton() {
     }
@@ -273,30 +273,30 @@ public interface Product {
 
     public void harvest();
 }
-public class ConcreteFactory implements Factory {//自由扩展工厂不同操作
-    //工厂生产产品
+public class ConcreteFactory implements Factory {// 自由扩展工厂不同操作
+    // 工厂生产产品
     public Product create() {
         return new ConcreteProduct();
     }
 }
-public class ConcreteProduct implements Product {//自由扩展不同产品种类
+public class ConcreteProduct implements Product {// 自由扩展不同产品种类
     public void grow() {
-        //增长
+        // 增长
     }
     public void harvest() {
-        //行为
+        // 行为
     }
 }
 public class ClientDemo {
     public static void main(String[] args) {
         ConcreteFactory concreteFactory = new ConcreteFactory();
         Product product1 = concreteFactory.create();
-        product1.grow();//可以不用这个，工厂类也可以封装调用产品的业务方法
+        product1.grow();// 可以不用这个，工厂类也可以封装调用产品的业务方法
     }
 }
-//工厂方法模式就是在别的地方封装一下new对象的过程，现在将实例化封装在工厂中，也是为了系统的可扩展性和耦合性；和简单工厂的区别就是这个工厂有继承的关系在，扩展性啥的都方便，一个工厂负责一个产品，封装性和单一职责原则体现了
-//优点：封装，可扩展
-//唯一的缺点就是产品类的增加同时也得增加对应的工厂类，就这有点麻烦，其实还行
+// 工厂方法模式就是在别的地方封装一下new对象的过程，现在将实例化封装在工厂中，也是为了系统的可扩展性和耦合性；和简单工厂的区别就是这个工厂有继承的关系在，扩展性啥的都方便，一个工厂负责一个产品，封装性和单一职责原则体现了
+// 优点：封装，可扩展
+// 唯一的缺点就是产品类的增加同时也得增加对应的工厂类，就这有点麻烦，其实还行
 ```
 
 
@@ -317,7 +317,7 @@ public interface ProductA {
     public void harvest();
 }
 public class ConcreteFactory implements Factory {
-    //工厂生产产品
+    // 工厂生产产品
     public ProductA createA() {
         return new ProductA1();
     }
@@ -327,18 +327,18 @@ public class ConcreteFactory implements Factory {
 }
 public class ProductA1 implements ProductA {
     public void grow() {
-        //增长
+        // 增长
     }
     public void harvest() {
-        //行为
+        // 行为
     }
 }
 public class ProductB1 implements ProductB {
     public void add() {
-        //增长
+        // 增长
     }
     public void deed() {
-        //行为
+        // 行为
     }
 }
 public class ClientDemo {
@@ -350,24 +350,26 @@ public class ClientDemo {
         productB1.add();
     }
 }
-//优点：在工厂方法模式基础上可以对一系列有相同约束的产品种类进行封装创建对象
-//缺点：产品种类增加，得手动修改工厂接口
+// 优点：在工厂方法模式基础上可以对一系列有相同约束的产品种类进行封装创建对象
+// 缺点：产品种类增加，得手动修改工厂接口
 ```
 
 ### 5.4 建造者模式
 
-> 产品本身只有属性，产品的组成和操作放在建造者那处理，对了，建造者由导演控制那些操作
+> 产品本身只有属性，产品的组成和操作放在建造者那处理
+>
+> 把一个复杂对象的构造过程放到外面处理
 
 ![]( ../../IMG/Build.png)
 
 ```java
-//产品抽象类
+// 产品抽象类
 public abstract class Product {
     private String name;
     private String type;
-    //省略get,set方法
+    // 省略get,set方法
 }
-//具体产品，但是还没建造好，得由建造者来建造
+// 具体产品，但是还没建造好，得由建造者来建造
 public class ProductA extends Product {
     private String a;
     public Product(String a){
@@ -377,13 +379,13 @@ public class ProductA extends Product {
         return a
     }
 }
-//建造者接口
+// 建造者接口
 public interface ProductBuilder {
-    void buildName();//抽象出产品的组成
-    void buildType();//抽象出产品的组成
+    void buildName();// 抽象出产品的组成
+    void buildType();// 抽象出产品的组成
 }
-//建造者对产品做的事情
-public class ProductBuildImp extends ProductBuilder {//可以有多个建造者
+// 建造者对产品做的事情
+public class ProductBuildImp extends ProductBuilder {// 可以有多个建造者去建造不同产品
     private ProductA productA = new ProductA("A-12号")
     void buildName() {
         productA.setName("飞机")
@@ -392,7 +394,7 @@ public class ProductBuildImp extends ProductBuilder {//可以有多个建造者
         productA.setType("民用")
     }
 }
-//导演控制建造者的动作，封装内部操作
+// 导演控制建造者的动作，封装内部操作
 public class Director{
     ProductBuilder product;
     public Product constructA() {
@@ -402,9 +404,10 @@ public class Director{
         return product;
     }
 }
-//优点：可以封装内部组成和操作
-//建造者独立，易于扩展，常用在产品执行方法顺序不同产生结果不同时，还有建造者操作顺序不同产生不同结果，这时候用建造者就很合适，所以建造者侧重于装配零件和装配顺序
-//也叫生成器模式，将一个复杂对象的构建与其表示分类，使得同样的构建过程可以创建不同的产品
+// 优点：可以封装内部组成和操作
+// 建造者独立，易于扩展，常用在产品执行方法顺序不同产生结果不同时，还有建造者操作顺序不同产生不同结果，
+// 这时候用建造者就很合适，所以建造者侧重于自定义装配零件和装配顺序来得到不同的产品
+// 也叫生成器模式，将一个复杂对象的构建与其表示分类，使得不同的构建过程可以创建不同的产品
 ```
 
 ### 5.5 原型模式
@@ -415,7 +418,7 @@ public class Director{
 
 ```java
 public interface Product extends Cloneable {
-    //重写父clone方法，说明实现类可以被clone
+    // 重写父clone方法，说明实现类可以被clone
     Product clone();
 }
 
@@ -424,7 +427,8 @@ public class ConcreteProduct implements Product {
     public Product clone() {
         try {
             Product p = (Product) super.clone();
-            p.setParts(this.parts.clone());//这个是手动用深克隆给引用对象重新弄一份，不然还是那一份
+            // 这个是手动用深克隆给引用对象重新弄一份，不然还是那一份
+            p.setParts(this.parts.clone());
             return p;
         } catch (CloneNotSupportedException e) {
             e.printStackTrace();
@@ -440,11 +444,11 @@ public class Client {
         return p;
     }
 }
-//原型模式比创建对象性能好，它是直接克隆内存对象的二进制流得到一份，规避了构造方法，省了初始化对象里面值的步骤
-//就像设计师辛苦用木板(类)雕刻出一个模子(对象)，然后就可以用这个模子去快速印出花纹，这就是原型模式的意思，不用再重复用木板雕刻模子。
-//浅克隆和深克隆的问题，如果ConcreteProduct类中有一个引用变量，那普通的clone就是浅克隆，克隆出的几个产品用的都是相同引用，所以这时就得用深克隆，在克隆出新产品后再在这个新产品对象中再克隆这个引用的对象。
-//深克隆的解决方法还有另一种就是实现Serializable通过序列化来处理clone
-//缺点就是每个类都得写一份clone的方法，只要clone就得重写clone方法
+// 原型模式比创建对象性能好，它是直接克隆内存对象的二进制流得到一份，规避了构造方法，省了初始化对象里面值的步骤
+// 就像设计师辛苦用木板(类)雕刻出一个模子(对象)，然后就可以用这个模子去快速印出花纹，这就是原型模式的意思，不用再重复用木板雕刻模子。
+// 浅克隆和深克隆的问题，如果ConcreteProduct类中有一个引用变量，那普通的clone就是浅克隆，克隆出的几个产品用的都是相同引用，所以这时就得用深克隆，在克隆出新产品后再在这个新产品对象中再克隆这个引用的对象。
+// 深克隆的解决方法还有另一种就是实现Serializable通过序列化来处理clone
+// 缺点就是每个类都得写一份clone的方法，只要clone就得重写clone方法
 ```
 
 ### 创建型总结
@@ -455,7 +459,7 @@ public class Client {
 
 > 通过继承或组合让类和对象形成更大的结构，来适应更高层次逻辑需求
 >
-> 当想到看到有几个点，这几个点有个什么关系应该放到一起就可以组成更大的结构，就用结构型
+> 当想到看到有几个点，这几个点有个什么关系应该怎样放在一起就组成更好的结构，就用结构型
 >
 > 点线面的场景
 
@@ -469,7 +473,7 @@ public class Client {
 
 ```java
     public interface Subject {
-        //定义一个请求方法
+        // 定义一个请求方法
         public void request();
     }
     public class RealSubject implements Subject {
@@ -485,7 +489,7 @@ public class Client {
         // 实现请求方法
         public void request() {
             this.beforeRequest();
-            subject.request();//控制对这个对象的访问
+            subject.request();// 控制对这个对象的访问
             this.afterRequest();
         }
         // 请求前的操作
@@ -497,8 +501,8 @@ public class Client {
             // 善后处理
         }
     }
-//代理还可以分为远程代理、虚拟代理、保护代理、缓存代理等
-//优点就是不影响真实业务的前提下间接做别的操作，比如安全，日志；提高扩展性
+// 代理还可以分为远程代理、虚拟代理、保护代理、缓存代理等
+// 优点就是不影响真实业务的前提下间接做别的操作，比如安全，日志；提高扩展性
 ```
 
 动态代理：它比静态代理好的地方就是它可以写成一个工具类，这样每当想创建代理类就调用这个工具类，封装代理实现，就不需要每次都得手写一个代理类。小技巧：这个工具类中实现创建不同代理类可以用反射来动态得到相应的被代理方法。
@@ -523,9 +527,10 @@ public class SimpleJDKDynamicProxyDemo {
             this.realObj = realObj;
         }
 
+        // 对代理接口所有方法调用转到此方法
         @Override
         public Object invoke(Object proxy, Method method,
-                             Object[] args) throws Throwable {//对代理接口所有方法调用转到此方法
+                             Object[] args) throws Throwable {
             System.out.println("entering " + method.getName());
             Object result = method.invoke(realObj, args);
             System.out.println("leaving " + method.getName());
@@ -547,7 +552,7 @@ public class SimpleJDKDynamicProxyDemo {
 
 ### 6.2 装饰模式
 
-> 利用继承来给具体构件增加另外的功能操作。其实和代理模式差不多，只是这个有继承关系的参与
+> 利用继承来给具体构件增加另外的功能操作。其实和代理模式差不多，只是这个有继承关系的参与，更灵活
 
 ![](../../IMG/Decorator.png)
 
@@ -557,7 +562,7 @@ public interface Component {
 }
 public class ConcreteComponent implements Component {
     public void request() {
-        //业务代码
+        // 业务代码
         System.out.println("模式");
     }
 }
@@ -575,27 +580,30 @@ public class ConcreteDecorator extends Decorator {
     public ConcreteDecorator(Component component) {
         super(component);
     }
-    //定义自己的方法
+    // 定义自己的方法
     private void method() {
-        System.out.println("修饰-");//增加功能、职责
+        System.out.println("装饰-");// 增加功能、职责
     }
-    //重写operation方法
+    // 重写operation方法
     public void request() {
         this.method();
         super.request();
     }
 }
-//使用
+// 使用
 public class Client {
     public static void main(String args[]) {
         Component component = new ConcreteComponent();
-        //进行装饰
-        component = new ConcreteDecorator(component);//注意这里component没错，重写引用了ConcreteDecorator
-        component.request();//这样在原来的操作上就增加了一个操作
+        // 进行装饰
+        // 注意这里component没错，重写引用了ConcreteDecorator
+        component = new ConcreteDecorator(component);
+        component.request();// 这样在原来的操作上就增加了一个操作
     }
-}//输出：装饰-模式
-//继承的一种替代方案
-//这个比代理模式好就是装饰子类可以有多个，可以扩展不同类，从而扩展增加不同功能；这样的方式就比单纯继承的灵活性好
+}
+// 输出：装饰-模式
+// 继承的一种替代方案
+// 这个比代理模式好就是装饰子类可以有多个，可以扩展不同类，从而扩展增加不同功能；
+// 这样的方式就比单纯继承的灵活性好
 ```
 
 ### 6.3 适配器模式
@@ -606,7 +614,7 @@ public class Client {
 
 ```java
 public class Adaptee {
-    //原有业务处理
+    // 原有业务处理
     public void specificRequest() {
     }
 }
@@ -614,20 +622,21 @@ public interface Target {
     public void request();
 }
 public class Adapter extends Adaptee implements Target {
-    public void request() {//适配Target接口
+    public void request() {// 重点处-适配Target接口
         super.specificRequest();
     }
 }
-//使用
+// 使用
 public class Client {
     public static void main(String args[]) {
-        //适配器模式应用
+        // 适配器模式应用
         Target target = new Adapter();
         target.request();
     }
 }
-//扩展类功能，增加类功能，改装类功能
-//适配器模式的结构其实不是固定上面那种，只要一个适配器类能将两个不匹配的东西连接起来，就可以说属于适配器模式
+// 扩展类功能，增加类功能，改装类功能
+// 适配器模式的结构其实不是固定上面那种，只要一个适配器类能将两个不匹配的东西连接起来，
+// 就可以说属于适配器模式
 ```
 
 ### 6.4 组合模式
@@ -637,11 +646,11 @@ public class Client {
 ![](../../IMG/Composite.png)
 
 ```java
-//定义抽象构件接口
+// 定义抽象构件接口
 public interface Component {
     public void operation();
 }
-//定义树枝构件
+// 定义树枝构件
 public class Composite implements Component {
     // 构件容器
     private ArrayList<Component> componentList = new ArrayList<Component>();
@@ -661,40 +670,41 @@ public class Composite implements Component {
         // 业务逻辑代码
     }
 }
-//定义叶子构件
+// 定义叶子构件
 public class Leaf implements Component {
     public void operation() {
         // 业务逻辑代码
     }
 }
-//使用
+// 使用
 public class Client {
     public static void main(String args[]) {
-        //创建一个根节点
+        // 创建一个根节点
         Composite root = new Composite();
         root.operation();
-        //创建树枝节点
+        // 创建树枝节点
         Composite branch = new Composite();
-        //创建叶子节点
+        // 创建叶子节点
         Leaf leaf = new Leaf();
-        //构建树形结构
+        // 构建树形结构
         root.add(branch);
         branch.add(leaf);
     }
-    //遍历树（递归）
+    // 遍历树（递归）
     public static void display(Composite root) {
         for (Component c : root.getChild()) {
-            if (c instanceof Leaf) {//如果节点类型是叶子节点
+            if (c instanceof Leaf) {// 如果节点类型是叶子节点
                 c.operation();
-            } else {//树枝节点
+            } else {// 树枝节点
                 c.operation();
-                display((Composite) c);//递归调用
+                display((Composite) c);// 递归调用
             }
         }
     }
 }
-//private ArrayList<Component> componentList = new ArrayList<Component>();
-//整个挺有趣，就是想象出一个格子本，每个格子空间都是Component，然后在整个格子里面自由地创建，画出一个树形图、或者奇怪的东西，DIY无疑了。
+// private ArrayList<Component> componentList = new ArrayList<Component>();
+// 整个挺有趣，就是想象出一个格子本，每个格子空间都是Component，然后在整个格子里面自由地创建，
+// 画出一个树形图、或者奇怪的东西，DIY无疑了。
 ```
 
 ### 6.5 桥梁模式
@@ -704,47 +714,47 @@ public class Client {
 ![](../../IMG/Bridge.png)
 
 ```java
-//实现化角色
+// 实现化角色
 public interface Implementor {
-    //方法的实现化声明
+    // 方法的实现化声明
     public void operationImp();
 }
 
-//具体实现化角色
+// 具体实现化角色
 public class ConcreteImplementor implements Implementor {
-    //方法的实现化实现
+    // 方法的实现化实现
     public void operationImp() {
         // 业务处理代码
     }
 }
-//抽象化角色
+// 抽象化角色
 public abstrac Abstraction {
-    //定义对实现化角色的引用
+    // 定义对实现化角色的引用
     private Implementor imp;
 
     public Abstraction(Implementor imp) {
         this.imp = imp;
     }
 
-    //业务方法
+    // 业务方法
     public void operation() {
-        //其他操作
+        // 其他操作
         this.imp.operationImp();
     }
 }
 
-//修正抽象化角色
+// 修正抽象化角色
 public class RefinedAbstraction extends Abstraction {
     public RefinedAbstraction(Implementor imp) {
         super(imp);
     }
-    //修正父类的方法
+    // 修正父类的方法
     public void operation() {
         super.operation();
     }
 }
 
-//使用
+// 使用
 public class Client {
     public static void main(String args[]) {
         // 定义一个实现化角色
@@ -755,9 +765,11 @@ public class Client {
         abs.operation();
     }
 }
-//使用场景：当抽象化角色和实现化角色有关系，而且不互相影响，就是抽象方和实现方二者可以单独变化而不受对方约束，
-//桥梁模式主要就是将桥两边的抽象化角色和实现化角色整合成一个构件
-//比如图形和颜色两个可以组成一个对象，比如正方形是黑色就是个对象；这样图形可以在抽象这块扩展不同子类，颜色可以在实现那块有不同颜色实现
+// 使用场景：当抽象化角色和实现化角色有关系，而且不互相影响，
+// 就是抽象方和实现方二者可以单独变化而不受对方约束，
+// 桥梁模式主要就是将桥两边的抽象化角色和实现化角色整合成一个构件
+// 比如图形和颜色两个可以组成一个对象，比如正方形是黑色就是个对象；
+// 这样图形可以在抽象这块扩展不同子类，颜色可以在实现那块有不同颜色实现
 ```
 
 ### 6.6 外观模式
@@ -777,13 +789,14 @@ public class Client {
         face.methodC();
     }
 }
-public class Facade {//充当包装类角色
-    //被委托的对象
-    private ClassA a = new ClassA();  //也可以不用在这实例化的，和在外面一个道理
+public class Facade {// 充当包装类角色
+    // 被委托的对象
+    // 也可以不用在这实例化的，和在外面一个道理
+    private ClassA a = new ClassA();
     private ClassB b = new ClassB();
     private ClassC c = new ClassC();
 
-    //提供外界的方法
+    // 提供外界的方法
     public void methodA() {
         a.methodA();
     }
@@ -796,22 +809,22 @@ public class Facade {//充当包装类角色
 }
 public class ClassA {
     public void methodA() {
-        //A业务
+        // A业务
     }
 }
 public class ClassB {
     public void methodB() {
-        //B业务
+        // B业务
     }
 }
 public class ClassC {
     public void methodC() {
-        //C业务
+        // C业务
     }
 }
-//可以说是封装大户了
-//应用：傻瓜相机一键操作，省去买菜洗菜炒菜做饭环节直接去饭店；就是为一堆复杂的模块提供一个接口一键操作
-//内繁外简，简化操作，降低客户端和子系统的依赖，实现低耦合，黑箱操作
+// 可以说是封装大户了
+// 应用：傻瓜相机一键操作，省去买菜洗菜炒菜做饭环节直接去饭店；就是为一堆复杂的模块提供一个接口一键操作
+// 内繁外简，简化操作，降低客户端和子系统的依赖，实现低耦合，黑箱操作
 ```
 
 ### 6.7 享元模式
@@ -837,7 +850,7 @@ public class ConcreteFlyweight implements Flyweight {
                 + "，外部状态：" + extrinsicState);
     }
 }
-//享元工厂
+// 享元工厂
 public class FlyweightFactory {
     private static Map<String, Flyweight> pool = new HashMap<String, Flyweight>();
 
@@ -853,8 +866,10 @@ public class FlyweightFactory {
         return flyweight;
     }
 }
-//仔细看上面代码意义就知道，享元工厂会去检查池子里面是否有那个对象，用内部状态判断，如果没有就创建，反之不创建。
-//应用：五子棋盘，黑白棋就是两个元，这两个元对象在一个池子pool里面，使用时就复用这两个元对象，使用就是把它放在棋盘上，在外部添加坐标，规则等，从而组成一个棋盘
+// 仔细看上面代码意义就知道，享元工厂会去检查池子里面是否有那个对象，用内部状态判断，
+// 如果没有就创建，反之不创建。
+// 应用：五子棋盘，黑白棋就是两个元，这两个元对象在一个池子pool里面，使用时就复用这两个元对象，
+// 使用就是把它放在棋盘上，在外部添加坐标，规则等，从而组成一个棋盘
 ```
 
 ## 7. 行为型（11种）
@@ -869,30 +884,30 @@ public class FlyweightFactory {
 
 ```java
 public abstract class AbstractClass {
-    //基本方法
+    // 基本方法
     protected abstract void operation();
-    //模板方法
-    public void templateMethod() {//封装不变的部分，子类扩展可变的部分
-        //调用基本方法，完成相关的逻辑
+    // 模板方法
+    public void templateMethod() {// 封装不变的部分，子类扩展可变的部分
+        // 调用基本方法，完成相关的逻辑
         this.operation();
     }
 }
-public class ConcreteClass extends AbstractClass {//不同子类有不同实现
+public class ConcreteClass extends AbstractClass {// 不同子类有不同实现
     // 实现基本业务方法
     protected void operation() {
         // 业务逻辑
     }
 }
-//使用
+// 使用
 public class Client {
     public static void main(String args[]) {
         AbstractClass ac = new ConcreteClass();
-        //调用模板方法
+        // 调用模板方法
         ac.templateMethod();
     }
 }
-//多个具体类实现模板类，不同的实现抽象方法，从而让顶级逻辑的实现不同
-//把公有的，重要的，核心的，相同的算法操作放到父类中实现，子类用来扩展 
+// 多个具体类实现模板类，不同的实现抽象方法，从而让顶级逻辑的实现不同
+// 把公有的，重要的，核心的，相同的算法操作放到父类中实现，子类用来扩展 
 ```
 
 ### 7.2 命令模式
@@ -903,7 +918,7 @@ public class Client {
 
 ```java
 public interface Command {
-    //执行命令的方法
+    // 执行命令的方法
     public void execute();
 }
 public class ConcreteCommand implements Command {
@@ -928,7 +943,7 @@ public class Invoker {
     public void setCommand(Command command) {
         this.command = command;
     }
-    //执行命令
+    // 执行命令
     public void action() {
         this.command.execute();
     }
@@ -947,7 +962,7 @@ public class Client {
     }
 }
 
-//适用场景：回调、存储状态分辨撤销、操作日志记录等
+// 适用场景：回调、存储状态分辨撤销、操作日志记录等
 ```
 
 ### 7.3 责任链模式
@@ -959,7 +974,7 @@ public class Client {
 ```java
 public abstract class Handler {
     private Handler successor;
-    //处理方法
+    // 处理方法
     public abstract void handleRequest();
     public Handler getSuccessor() {
         return successor;
@@ -968,7 +983,7 @@ public abstract class Handler {
         this.successor = successor;
     }
 }
-public class ConcreteHandler extends Handler {//注意，一般继承都可以有多个子类，意味着可以有多种处理方式
+public class ConcreteHandler extends Handler {// 注意，一般继承都可以有多个子类，意味着可以有多种处理方式
     // 处理请求
     public void handleRequest() {
         if (getSuccessor() != null) {
@@ -983,13 +998,13 @@ public class Client {
     public static void main(String args[]) {
         Handler h1 = new ConcreteHandler();
         Handler h2 = new ConcreteHandler();
-        h1.setSuccessor(h2);//将链子连接起来
-        h1.handleRequest();//一直延伸到最后一个具体处理者
+        h1.setSuccessor(h2);// 将链子连接起来
+        h1.handleRequest();// 一直延伸到最后一个具体处理者
     }
 }
-//优点就是请求和处理分开，代理类把请求发送下去，处理的过程就不管了，直到返回结果
-//缺点就是性能不太好
-//适用场景就是传递请求、业务流处理、文件一级一级地审批
+// 优点就是请求和处理分开，代理类把请求发送下去，处理的过程就不管了，直到返回结果
+// 缺点就是可能性能不太好
+// 适用场景就是传递请求、业务流处理、文件一级一级地审批
 ```
 
 ### 7.4 策略模式
@@ -999,33 +1014,34 @@ public class Client {
 ![](../../IMG/Strategy.png)
 
 ```java
-//抽象策略类
+// 抽象策略类
 public abstract class Strategy {
-    //策略方法
+    // 策略方法
     public abstract void strategyInterface();
 }
-//具体策略类
-public class ConcreteStrategy extends Strategy {  //这里就可以实现多种策略然后在Context中处理
+// 具体策略类
+// 这里就可以实现多种策略然后在Context中处理
+public class ConcreteStrategy extends Strategy {
     // 实现策略方法
     public void strategyInterface() {
         // 具体算法
     }
 }
-//环境角色
+// 环境角色
 public class Context {
     private Strategy strategy = null;
-    //构造函数
-    public Context(Strategy strategy) {//放不同的处理方式的对象
+    // 构造函数
+    public Context(Strategy strategy) {// 放不同的处理方式的对象
         this.strategy = strategy;
     }
-    //调用策略方法
+    // 调用策略方法
     public void contextInterface() {
         this.strategy.strategyInterface();
     }
 }
-//优点就是可以独立设计算法，用继承还可以复用父类的处理，而且还避免了多重条件转移语句
-//缺点就是使用哪种策略必须知道每种设计算法的不同区别
-//常用在算法组选择，算法组切换
+// 优点就是可以独立设计算法，用继承还可以复用父类的处理，而且还避免了多重条件转移语句
+// 缺点就是使用哪种策略必须知道每种设计算法的不同区别
+// 常用在算法组选择，算法组切换
 ```
 
 ### 7.5 迭代器模式
@@ -1052,7 +1068,7 @@ public class ConcreteIterator implements Iterator {
     public boolean hasNext() {
         return index < size;
     }
-    //返回下一个元素
+    // 返回下一个元素
     public Object next() {
         if (index < size) {
             return agg.getElement(index++);
@@ -1085,7 +1101,7 @@ public class ConcreteAggregate implements Aggregate {
         return new ConcreteIterator(this);
     }
 }
-//就是一个遍历集合的类
+// 就是一个遍历集合的类
 ```
 
 ### 7.6 中介模式
@@ -1097,30 +1113,30 @@ public class ConcreteAggregate implements Aggregate {
 ![](../../IMG/Mediator.png)
 
 ```java
-//抽象中介者
+// 抽象中介者
 public abstract class Mediator {
-    //中介者模式的业务逻辑方法
+    // 中介者模式的业务逻辑方法
     public abstract void colleagueChanged(Colleague c);
 }
 
-//具体中介者
+// 具体中介者
 public class ConcreteMediator extends Mediator {
     private ConcreteColleague1 c1;
     private ConcreteColleague2 c2;
 
-    //中介者模式的业务逻辑方法
+    // 中介者模式的业务逻辑方法
     public void colleagueChanged(Colleague c) {
         c1.action();
         c2.action();
     }
 
-    //工厂方法，创建同事对象
+    // 工厂方法，创建同事对象
     public void createConcreteMediator() {
         c1 = new ConcreteColleague1(this);
         c2 = new ConcreteColleague2(this);
     }
 
-    //获取同事对象
+    // 获取同事对象
     public ConcreteColleague1 getC1() {
         return c1;
     }
@@ -1130,16 +1146,16 @@ public class ConcreteMediator extends Mediator {
     }
 }
 
-//抽象同事类
+// 抽象同事类
 public abstract class Colleague {
     private Mediator mediator;
 
-    //构造函数
-    public Colleague(Mediator m) {//每增加一个同事就在中介那去报道
+    // 构造函数
+    public Colleague(Mediator m) {// 每增加一个同事就在中介那去报道
         this.mediator = m;
     }
 
-    //getter和setter方法
+    // getter和setter方法
     public Mediator getMediator() {
         return mediator;
     }
@@ -1148,42 +1164,42 @@ public abstract class Colleague {
         this.mediator = mediator;
     }
 
-    //抽象行动方法，由子类实现
+    // 抽象行动方法，由子类实现
     public abstract void action();
 
-    //业务方法，调用此方法改变对象的内部状态
+    // 业务方法，调用此方法改变对象的内部状态
     public void change() {
         this.mediator.colleagueChanged(this);
     }
 }
 
-//具体同事类
+// 具体同事类
 public class ConcreteColleague1 extends Colleague {
-    //构造函数
+    // 构造函数
     public ConcreteColleague1(Mediator m) {
         super(m);
     }
 
-    //实现具体行动方法
+    // 实现具体行动方法
     public void action() {
         System.out.println("这是同事1的行动！");
     }
 }
 
 public class ConcreteColleague2 extends Colleague {
-    //构造函数
+    // 构造函数
     public ConcreteColleague2(Mediator m) {
         super(m);
     }
 
-    //实现具体行动方法
+    // 实现具体行动方法
     public void action() {
         System.out.println("这是同事2的行动！");
     }
 }
-//好处就是避免同事类之间的耦合，单个同事对象只知道中介者，不知晓旁边有同事；将同事的行为和同事之间的协作分离
-//缺点确实有点多，可能将中介者变成超级类，过于复杂难以复用，每增加同事类都得在中介者那登记
-//用法，比如给单身男和单身女配对
+// 好处就是避免同事类之间的耦合，单个同事对象只知道中介者，不知晓旁边有同事；将同事的行为和同事之间的协作分离
+// 缺点确实有点多，可能将中介者变成超级类，过于复杂难以复用，每增加同事类都得在中介者那登记
+// 用法，比如给单身男和单身女配对
 ```
 
 ### -------
@@ -1198,64 +1214,65 @@ public class ConcreteColleague2 extends Colleague {
 
 ```java
 public interface Subject {
-    //登记一个新的观察者
+    // 登记一个新的观察者
     public void attach(Observer obs);
-    //删除一个登记过的观察者
+    // 删除一个登记过的观察者
     public void detach(Observer obs);
-    //通知所有登记过的观察者对象
+    // 通知所有登记过的观察者对象
     public void notifyObserver();
 }
 public class ConcreteSubject implements Subject {
     private Vector<Observer> obsVector = new Vector<Observer>();
-    //登记一个新的观察者
+    // 登记一个新的观察者
     public void attach(Observer obs) {
         obsVector.add(obs);
     }
-    //删除一个登记过的观察者
+    // 删除一个登记过的观察者
     public void detach(Observer obs) {
         obsVector.remove(obs);
     }
-    //通知所有登记过的观察者对象
+    // 通知所有登记过的观察者对象
     public void notifyObserver() {
         for (Observer e : obsVector) {
             e.update();
         }
     }
-    //返回观察者集合的Enumeration对象
+    // 返回观察者集合的Enumeration对象
     public Enumeration<Observer> observers() {
         return obsVector.elements();
     }
-    //业务方法，改变状态
+    // 业务方法，改变状态
     public void change() {
         this.notifyObserver();
     }
 }
 public interface Observer {
-    //更新方法
+    // 更新方法
     public void update();
 }
 public class ConcreteObserver implements Observer {
-    //实现更新方法
+    // 实现更新方法
     public void update() {
         System.out.println("收到通知，并进行处理！");
     }
 }
 public class Client {
     public static void main(String args[]) {
-        //创建一个主题对象（被观察者）
+        // 创建一个主题对象（被观察者）
         ConcreteSubject subject = new ConcreteSubject();
-        //创建一个观察者
-        Observer obs = new ConcreteObserver();//可以有很多和观察者
-        //登记观察者
+        // 创建一个观察者
+        Observer obs = new ConcreteObserver();// 可以有很多和观察者
+        // 登记观察者
         subject.attach(obs);
-        //改变状态
+        // 改变状态
         subject.change();
     }
 }
-//这个挺简单，就是被观察者类状态变化后就执行某个方法，这个方法里面遍历执行每个观察者，以此来通知观察者有所行动
-//优点就是状态改变一次就更新多个观察者，类似Android中的广播和livedata
-//这个可以实现责任链模式，但两者不同，这个消息是变化的，责任链那个消息传递是固定的
-//缺点就是观察者太多性能也有影响，而且被观察者通知次数多了容易造成系统崩溃
+// 这个挺简单，就是被观察者类状态变化后就执行某个方法，这个方法里面遍历执行每个观察者，
+// 以此来通知观察者有所行动
+// 优点就是状态改变一次就更新多个观察者，类似Android中的广播和livedata
+// 这个可以实现责任链模式，但两者不同，这个消息是变化的，责任链那个消息传递是固定的
+// 缺点就是观察者太多性能也有影响，而且被观察者通知次数多了容易造成系统崩溃
 ```
 
 ### 7.8 备忘录模式
@@ -1267,9 +1284,9 @@ public class Client {
 ![](../../IMG/Memo.png)
 
 ```java
-//需要保存状态的原始类
+// 需要保存状态的原始类
 public class Original {
-    //内部状态
+    // 内部状态
     private String state = "";
     public String getState() {
         return state;
@@ -1277,21 +1294,21 @@ public class Original {
     public void setState(String state) {
         this.state = state;
     }
-    //创建备忘录
+    // 创建备忘录
     public Memo createMemo() {
         return new Memo(this.state);
     }
-    //恢复一个备忘录
+    // 恢复一个备忘录
     public void restoreMemo(Memo memo) {
         this.setState(memo.getState());
     }
 }
-//备忘录
+// 备忘录
 public class Memo {
-    //发起人的内部状态
+    // 发起人的内部状态
     private String state;
 
-    //构造函数传递参数
+    // 构造函数传递参数
     public Memo(String state) {
         this.state = state;
     }
@@ -1304,7 +1321,7 @@ public class Memo {
         this.state = state;
     }
 }
-//负责管理备忘录
+// 负责管理备忘录
 public class MemoManage {
     // 备忘录对象组
     private Memo memo;
@@ -1319,19 +1336,20 @@ public class MemoManage {
 }
 public class Client {
     public static void main(String args[]) {
-        //定义原始类
+        // 定义原始类
         Original org = new Original();
-        //定义负责人
+        // 定义负责人
         MemoManage mm = new MemoManage();
-        //创建一个备忘录来管理
+        // 创建一个备忘录来管理
         mm.setMemo(org.createMemo());
-        //恢复备忘录数据到原始类中
+        // 恢复备忘录数据到原始类中
         org.restoreMemo(mm.getMemo());
     }
 }
-//使用场景：需要保存和恢复数据、保存副本用于其他用途、游戏存档读档；所以以后ubuntu一定得把权限保存一份，权限改错真的麻烦
-//使用备忘录时就得注意备忘录的生命周期，然后就是备忘录创建多了就得新建对象，这对性能也有影响
-//优点就是可恢复数据，缺点就是保存数据创建备忘录影响性能
+// 使用场景：需要保存和恢复数据、保存副本用于其他用途、游戏存档读档；
+// 所以以后ubuntu一定得把权限保存一份，权限改错真的麻烦
+// 使用备忘录时就得注意备忘录的生命周期，然后就是备忘录创建多了就得新建对象，这对性能也有影响
+// 优点就是可恢复数据，缺点就是保存数据创建备忘录影响性能
 
 ```
 
@@ -1383,7 +1401,7 @@ public class Harddisk extends Hardware {
         computerVisitor.vistHarddisk(this);
     }
 }
-public class TypeVisitor implements ComputerVisitor {//将有关的操作集中起来
+public class TypeVisitor implements ComputerVisitor {// 将有关的操作集中起来
     @Override
     public void vistCPU(CPU cpu) {
         System.out.println("CPU型号：" + cpu.getType());
@@ -1425,17 +1443,19 @@ public class Client {
         computer.accept(runVisitor);
     }
 }
-/*CPU型号：Intel Core i7-620
+/*
+CPU型号：Intel Core i7-620
 硬盘型号：Seagate 500G 7200转
 -----------------
 型号为Intel Core i7-620的CPU正在运转
-型号为Seagate 500G 7200转的硬盘正在运转*/
-//看main里面的操作，它直接用对象执行对象里面的方法来操作自己，神奇
-//好处就是访问者对象可以集中操作元素对象、访问者里面在访问过程中可以保存状态他用
-//缺点显而易见就是挺复杂的，增加一个元素就得在访问者里面增加相应的操作；还破坏了封装，元素对象全部暴露出给访问者了
-//还破坏了依赖倒置，元素类依赖了具体类，而不是抽象类
-//这里有个静态分派和动态分派的问题，上面用的是动态分派，就是重写和重载的不同解决方案，以后再来仔细研究研究！！
-//见 https://zhuanlan.zhihu.com/p/259864836#:~:text=Kevin)%3B%0A%20%20%20%20%7D%0A%7D-,%E8%BF%90%E8%A1%8C%E7%A8%8B%E5%BA%8F%EF%BC%8C%E8%BE%93%E5%87%BA%E5%A6%82%E4%B8%8B%EF%BC%9A,-Aurora%20gets%20a%20lobster
+型号为Seagate 500G 7200转的硬盘正在运转
+*/
+// 看main里面的操作，它直接用对象执行对象里面的方法来操作自己，神奇
+// 好处就是访问者对象可以集中操作元素对象、访问者里面在访问过程中可以保存状态他用
+// 缺点显而易见就是挺复杂的，增加一个元素就得在访问者里面增加相应的操作；还破坏了封装，元素对象全部暴露出给访问者了
+// 还破坏了依赖倒置，元素类依赖了具体类，而不是抽象类
+// 这里有个静态分派和动态分派的问题，上面用的是动态分派，就是重写和重载的不同解决方案，以后再来仔细研究研究！！
+// 见 https:// zhuanlan.zhihu.com/p/259864836#:~:text=Kevin)%3B%0A%20%20%20%20%7D%0A%7D-,%E8%BF%90%E8%A1%8C%E7%A8%8B%E5%BA%8F%EF%BC%8C%E8%BE%93%E5%87%BA%E5%A6%82%E4%B8%8B%EF%BC%9A,-Aurora%20gets%20a%20lobster
 ```
 
 ### 7.10 状态模式
@@ -1447,7 +1467,7 @@ public class Client {
 ![](../../IMG/State.png)
 
 ```java
-//抽象状态
+// 抽象状态
 public abstract class State {
     // 定义一个环境角色
     protected Context context;
@@ -1459,21 +1479,21 @@ public abstract class State {
     // 抽象行为
     public abstract void handle();
 }
-//具体状态1
+// 具体状态1
 public class ConcreteState1 extends State {
     // 状态1的行为逻辑处理
     public void handle() {
         System.out.println("行为1的逻辑处理");
     }
 }
-//具体状态2
+// 具体状态2
 public class ConcreteState2 extends State {
     // 状态2的行为逻辑处理
     public void handle() {
         System.out.println("行为2的逻辑处理");
     }
 }
-//环境角色
+// 环境角色
 public class Context {
     // 定义状态
     public static State STATE1 = new ConcreteState1();
@@ -1493,29 +1513,29 @@ public class Context {
     }
     // 行为委托
     public void handle1() {
-        //切换到状态1
-        this.setCurrentState(STATE1);//修改当前状态指向哪个对象，然后下面执行这个对象中方法
+        // 切换到状态1
+        this.setCurrentState(STATE1);// 修改当前状态指向哪个对象，然后下面执行这个对象中方法
         this.currentState.handle();
     }
     public void handle2() {
-        //切换到状态2
-        this.setCurrentState(STATE2);//修改当前状态指向哪个对象，然后下面执行这个对象中方法
+        // 切换到状态2
+        this.setCurrentState(STATE2);// 修改当前状态指向哪个对象，然后下面执行这个对象中方法
         this.currentState.handle();
     }
 }
-//应用程序
+// 应用程序
 public class Client {
     public static void main(String args[]) {
-        //定义环境角色
+        // 定义环境角色
         Context context = new Context();
-        //执行行为
+        // 执行行为
         context.handle1();
         context.handle2();
     }
 }
-//优点就是结构简单，而且封装用得好，很容易地能切换状态对象；代替了多条件分支语句
-//缺点就是每个状态就意味着一个类，子类会变多，上下文对象会变得比较臃肿
-//android里面的不同模式下的不同状态就用可以这个来简化状态改变行为的处理过程
+// 优点就是结构简单，而且封装用得好，很容易地能切换状态对象；代替了多条件分支语句
+// 缺点就是每个状态就意味着一个类，子类会变多，上下文对象会变得比较臃肿
+// android里面的不同模式下的不同状态就用可以这个来简化状态改变行为的处理过程
 ```
 
 ### 7.11 解释器模式
@@ -1530,20 +1550,20 @@ public interface ArithmeticExpression {
 }
 public class Variable implements ArithmeticExpression {
     @Override
-    public int interpret(Variables variables) {//得到文法映射表中的对应值
+    public int interpret(Variables variables) {// 得到文法映射表中的对应值
         return variables.get(this);
     }
 }
 public class Variables {
     Map<Variable, Integer> v = new HashMap<>();
-    public void put(Variable variable, int value) {//文法里面的映射表
+    public void put(Variable variable, int value) {// 文法里面的映射表
         v.put(variable, value);
     }
     public int get(Variable variable) {
         return v.get(variable);
     }
 }
-public class Subtract implements ArithmeticExpression {//文法的规则
+public class Subtract implements ArithmeticExpression {// 文法的规则
     ArithmeticExpression left;
     ArithmeticExpression right;
     public Subtract(ArithmeticExpression left, ArithmeticExpression right) {
@@ -1555,7 +1575,7 @@ public class Subtract implements ArithmeticExpression {//文法的规则
         return left.interpret(variables) - right.interpret(variables);
     }
 }
-public class Plus implements ArithmeticExpression {//文法的规则
+public class Plus implements ArithmeticExpression {// 文法的规则
     ArithmeticExpression left;
     ArithmeticExpression right;
     public Plus(ArithmeticExpression left, ArithmeticExpression right) {
@@ -1575,12 +1595,12 @@ public class Client {
         variables.put(x, 10);
         variables.put(y, 20);
         ArithmeticExpression subtract = new Plus(new Subtract(y, x), y);
-        //new Subtract(y, x)这个仔细看就是里面的left，然后又去执行这个对象中的interpret返回计算结果
-        System.out.println(subtract.interpret(variables));//30
+        // new Subtract(y, x)这个仔细看就是里面的left，然后又去执行这个对象中的interpret返回计算结果
+        System.out.println(subtract.interpret(variables));// 30
     }
 }
-//缺点就是复杂，容易产生超级类
-//使用场景就是语法解释分析转换成计算机能识别处理的数据，还有就是对不同日志进行解释输出
+// 缺点就是复杂，容易产生超级类
+// 使用场景就是语法解释分析转换成计算机能识别处理的数据，还有就是对不同日志进行解释输出
 ```
 
 
