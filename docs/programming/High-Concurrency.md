@@ -35,7 +35,7 @@
 >
 > 线程状态：new创建--start就绪--runing系统调度运行--blocked阻塞--waiting等待--time_waiting时间--终止
 
-<img src="../IMG/ThreadStateImg.png" style="zoom: 67%;" />
+<img src="../../IMG/ThreadStateImg.png" style="zoom: 67%;" />
 
 ### 1.1 线程创建方式
 
@@ -405,7 +405,7 @@ class Producer implements Runnable {//生产者
             synchronized (buffer) {
                 while (buffer.size() == maxSize) {
                     try {
-                        System.out.println("Buffer is full, waiting for consumer to consume...");
+                        System.out.println("Buffer is full, waiting for consumer to consume../...");
                         buffer.wait();//如果满就让线程在buffer对象的条件队列中等待并释放锁
                     } catch (InterruptedException e) {
                         e.printStackTrace();
@@ -433,7 +433,7 @@ class Consumer implements Runnable {//消费者
             synchronized (buffer) {
                 while (buffer.isEmpty()) {
                     try {
-                        System.out.println("Buffer is empty, waiting for producer to produce...");
+                        System.out.println("Buffer is empty, waiting for producer to produce../...");
                         buffer.wait();//如果空就让线程在buffer对象的条件队列中等待并释放锁
                     } catch (InterruptedException e) {
                         e.printStackTrace();
@@ -499,7 +499,7 @@ class MyRunnable implements Runnable {
     public void run() {
         try {
             while (!Thread.currentThread().isInterrupted()) {//不断循环并判断线程中断标志位状态
-                System.out.println("Running...");
+                System.out.println("Running../...");
                 Thread.sleep(500);
             }
         } catch (InterruptedException e) {
@@ -530,7 +530,7 @@ interrupt()方法不会让线程显式中断，它只是隐式地将中断位改
 
 ### 5.1 原子变量和CAS
 
-![](../IMG/AtomicPackage.png)
+![](../../IMG/AtomicPackage.png)
 
 上面包里面的类就是可以以原子的方式来更新Integer、数组类型、引用类型、引用里面的字段等；轻量级操作有大作用，用来很安全地以原子方式更新值；比直接用synchronized和volatile更好更方便
 
@@ -613,7 +613,7 @@ public class MyLock {
 
 > 首先显示锁是为了解决synchronized使用的局限性，更灵活，可以说是synchronized的替代方案
 
-![LocksPackage](../IMG/LocksPackage.png)
+![LocksPackage](../../IMG/LocksPackage.png)
 
 Lock接口中定义了一些方法lock()/unLock()、tryLock()等，具体实现在ReentrantLock里面
 
@@ -720,7 +720,7 @@ public class WaitThread extends Thread {
 
 1. **写时复制容器**
 
-![](../IMG/CopyOnWriteArrayList.png)
+![](../../IMG/CopyOnWriteArrayList.png)
 
 其实这个写容器和正常List容器差不多，它同样也是实现List接口，但是这个里面它将容器的引用设置为volatile，每次获取引用就得到这个引用指向的容器空间，但是写的时候会联合显式锁ReentrantLock来给写操作加锁；所以这个写时复制适合并发读情况，写少的情况，而且如果容器体积太大也不合适，因为它写的时候是在容器副本上面写，这个容器副本得copy一份，体积太大性能有影响
 
@@ -927,7 +927,7 @@ public FutureTask(Callable<V> callable) {
 public void run() {
         if (state != NEW ||
             !UNSAFE.compareAn
-   .....
+   ../..../...
 ```
 
 
