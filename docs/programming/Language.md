@@ -194,7 +194,7 @@ Exception的子类有个叫RuntimeException，这是运行时异常，只有运�
 
 **文件：** 
 
-**并发：** [入口](https://github.com/PlusFlyCat/HomePage/blob/main/docs/High-Concurrency.md)
+**并发：** [入口](https:// github.com/PlusFlyCat/HomePage/blob/main/docs/High-Concurrency.md)
 
 **反射：** 反射有句经典的名言好像是上帝给java关了一扇门，但是又悄悄给它开了一扇窗，这个窗就是说反射
 
@@ -208,15 +208,15 @@ Java类本来是一个封装好一个房间，但是可以利用反射的方式�
 对象.Object中的getClass方法   比如person.getClass
 Class.forName("java.lang.Thread")
     
-//通过反射创建类：
-//通过Class对象的newInstance()方法来创建类的实例
+// 通过反射创建类：
+// 通过Class对象的newInstance()方法来创建类的实例
 Class<?> clazz = Class.forName("com.example.MyClass");
 Object obj = clazz.newInstance();
-//通过Constructor类的newInstance()方法来创建类的实例
+// 通过Constructor类的newInstance()方法来创建类的实例
 Class<?> clazz = Class.forName("com.example.MyClass");
 Constructor<?> constructor = clazz.getConstructor();
 Object obj = constructor.newInstance();
-//通过Method类的invoke()方法来调用类的方法
+// 通过Method类的invoke()方法来调用类的方法
 Class<?> clazz = Class.forName("com.example.MyClass");
 Object obj = clazz.newInstance();
 Method method = clazz.getMethod("myMethod", String.class);
@@ -260,78 +260,169 @@ Lambda表达式是Java 8中引入的一种新的语法结构，它允许以更�
 ```java
 (参数列表) -> 方法体
 (parameters) -> expression  或者  (parameters) -> { statements; }
-//使用
+// 使用
 (int a, int b) -> a + b
     
-//函数式接口实现
+// 函数式接口实现
 interface MyInterface {
     void doSomething();
 }
 
 MyInterface myInterface = () -> System.out.println("Do something!");
 myInterface.doSomething();
-
 ```
 
 Java中的一些Function、Predicate、Consumer接口就可以用Lambda来表示使用：
 
 ```java
-//将一个字符串转换为大写
+// 将一个字符串转换为大写 
 Function<String, String> toUpperCase = (String str) -> str.toUpperCase();
-System.out.println(toUpperCase.apply("lambda"));//输出LAMBDA
-//方法引用
-Function<String, Integer> parseInt = Integer::parseInt;
-//Lambda表达式作为方法参数传递
+// 方法引用：Function<String, String> toUpperCase = String::toUpperCase;
+System.out.println(toUpperCase.apply("lambda"));// 输出LAMBDA
+
+// Lambda表达式作为方法参数传递
 List<String> names = Arrays.asList("Alice", "Bob", "Charlie");
 names.forEach(name -> System.out.println(name));
-//Lambda表达式也可以作为方法的返回值
-Function<String, Function<String, Integer>> createAdder = (String prefix) -> {
-    return (String suffix) -> {
-        return Integer.parseInt(prefix + suffix);//将两个字符串拼接后转换为整数
-    };
-};
-//高级点的用法
-//使用andThen和compose方法来组合Lambda表达式
+
+// 高级点的用法
+// 使用andThen和compose方法来组合Lambda表达式
 Function<String, String> toUpperCase = String::toUpperCase;
 Function<String, String> addExclamation = str -> str + "!";
 Function<String, String> composed = toUpperCase.andThen(addExclamation);
-String result = composed.apply("hello"); // 输出 "HELLO!"
-//用java中的柯里化函数库Vavr和Guava来实现将多个参数的函数转换为一系列单参数函数
-Function<Integer, Function<Integer, Integer>> add = a -> b -> a + b;
-int result = add.apply(2).apply(3); // 输出 5
-//集合中的数据并行处理，提高了代码执行效率
-List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5);
-int sum = numbers.parallelStream().mapToInt(Integer::intValue).sum();//sum = 15
-//Java 8中引入的另一个新特性，Lambda表达式和默认方法一起使用
-interface MyInterface {
-    default void print(String message) {
-        System.out.println(message);
-    }
-}
+String result = composed.apply("hello"); //  输出 "HELLO!"
 
-MyInterface myInterface = (String message) -> System.out.println(message);
-myInterface.print("Hello"); // 输出 "Hello"
+// 用java中的柯里化函数库Vavr和Guava来实现将多个参数的函数转换为一系列单参数函数
+Function<Integer, Function<Integer, Integer>> add = a -> b -> a + b;
+int result = add.apply(2).apply(3); //  输出 5
+
+// 集合中的数据并行处理，提高了代码执行效率
+List<Integer> numbers = Arrays.asList(1, 2, 3, 4, 5);
+int sum = numbers.parallelStream().mapToInt(Integer::intValue).sum();// sum = 15
 ```
 
 ## Kotlin
 
-> 可玩性比java丰富，基于java，比java简明
+> 可玩性比java丰富，基于java
 
-**基本的不同就是：**
+**扩展属性/扩展函数/属性声明新方式：**
 
-- Kotlin中所有东西都是对象
-- 函数定义用fun
-- 语句后面不用写分号结尾
-- 函数返回值放后面
-- 定义变量用var/val，类型用：XX
-- 字符串定义多个字符串模板
-- 空值检测在类型后面加？
-- 类型用is检测是true后自动转换类型
-- for循环不用java那样，在for括号中用in；还可以在for括号中用in区间，step等
-- 用when 和 -> 代替java中的switch cash
-- 
+```kotlin
+class MyClass
 
-**静态方法：**
+// 为MyClass类添加扩展属性  对属性的读取和写入进行自定义操作
+var MyClass.stringRepresentation: String
+    get() = this.toString()
+    set(value) {
+        println(value.length)
+    }
+fun MyClass.getName() = "Kotlin"
+
+fun main() {
+    val obj = MyClass()
+
+    // 获取属性值
+    val str = obj.stringRepresentation
+    println(str) // 输出：MyClass@6ff3c5b5
+
+    // 设置属性值
+    obj.stringRepresentation = "Hello"
+    // 输出：5
+    
+    println(obj.getName())
+    // 输出Kotlin
+}
+```
+
+**数据类:** 
+
+```kotlin
+// 自动生成equals()、hashCode()和toString()
+data class Person(val name: String, val age: Int)
+
+fun main() {
+    // 提供了一个copy()方法复制原始对象的同时修改属性值
+    val person = Person("Bob", 30).copy(age = 18)
+    println(person.toString()) // Person(name=Bob, age=18)
+ 
+    // 解构声明
+    val (name, age) = person
+    println("name:$name, $age years of age") //name:Bob, 18 years of age
+}
+```
+
+**密封类:**  受限的类继承结构, 多用于when判断多个实例
+
+```kotlin
+sealed class Result {
+    class Success(val date: Int) : Result()
+    object Error : Result()
+}
+
+fun processResult(result: Result) {
+    // 编译器可以确保已经处理了所有可能的情况，而不需要添加else分支
+    when (result) {
+        is Result.Success -> println("Result: ${result.date}")
+        is Result.Error -> println("Error")
+    }
+}
+
+fun main() {
+    processResult(Result.Success(23)) // Result: 23
+}
+
+```
+
+**对象表达式：**
+
+```kotlin
+// 使用对象表达式，在不创建具体类的情况下，直接创建并使用这个对象
+open class Animal {
+    open fun sound() {
+        println("Animal makes a sound")
+    }
+}
+
+fun main() {
+    val cat = object : Animal() {
+        override fun sound() {
+            println("Meow")
+        }
+    }
+    
+    cat.sound() // 输出：Meow
+}
+
+// 在函数中创建临时的、局部作用域内的对象，以便在特定上下文中使用
+fun someFunction() {
+    val data = "Some data"
+
+    val logger = object {
+        fun log() {
+            println("Logging: $data")
+        }
+    }
+    
+    logger.log() // 输出：Logging: Some data
+}
+```
+
+**伴生对象：** 一种创建单例对象的方式，单例/初始化
+
+```kotlin
+object MySingleton {
+    fun getInstance() {
+        println("Instance")
+    }
+}
+
+fun main() {
+    MySingleton.getInstance() // Instance
+}
+```
+
+
+
+
 
 在java中静态方法定义很简单，直接在方法添加static修饰符即可；
 
@@ -355,7 +446,7 @@ myInterface.print("Hello"); // 输出 "Hello"
   		println("xxxx")
   	}
   	companion object {
-          //@JvmStatic    添加这个后这个方法才是这个类的真正静态方法，不添加也能用
+          // @JvmStatic    添加这个后这个方法才是这个类的真正静态方法，不添加也能用
   		fun doAction2() {
   			println("xxxx")
   		}
@@ -364,14 +455,19 @@ myInterface.print("Hello"); // 输出 "Hello"
   ```
 
 
+
+
+
+
+
 **标准函数：**
 
 - with   将**对象**作为**参数**并对其进行**lambda操作**，**最后一行代码**作为**返回值**返回
 
   ```kotlin
   val result = with(obj) {
-  // 这里是obj的上下文
-  "value" // with函数的返回值
+  //  这里是obj的上下文
+  "value" //  with函数的返回值
   }
   ```
 
@@ -379,8 +475,8 @@ myInterface.print("Hello"); // 输出 "Hello"
 
   ```kotlin
   val result = obj.run {
-  // 这里是obj的上下文
-  "value" // run函数的返回值
+  //  这里是obj的上下文
+  "value" //  run函数的返回值
   }
   ```
 
@@ -388,15 +484,15 @@ myInterface.print("Hello"); // 输出 "Hello"
 
   ```kotlin
   val result = obj.apply {
-  // 这里是obj的上下文
+  //  这里是obj的上下文
   }
-  // result == obj
+  //  result == obj
   ```
 
 - let  在**对象的基础**上对其操作，并把**对象传给lambda**操作，最后返回此对象
 
   ```kotlin
-  obj.let { obj -> //常
+  obj.let { obj -> // 常
       obj.xxxx
   }
   ```
@@ -404,7 +500,7 @@ myInterface.print("Hello"); // 输出 "Hello"
 - alse  前面执行完后再顺带执行这个
 
   ```kotlin
-  //交换两个变量
+  // 交换两个变量
   var a = 1
   var b = 2
   a = b.alse { b = a }
