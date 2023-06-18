@@ -302,7 +302,46 @@ int sum = numbers.parallelStream().mapToInt(Integer::intValue).sum();// sum = 15
 
 ## Kotlin
 
-> 可玩性比java丰富，基于java
+> 可玩性比java丰富，代码更少、可读性强、适配Java与Java库、代码安全、智能检测
+
+​     
+
+**空值与空检测：** kotlin中没有基本数据类型，用的都是包装类型，当编译器检测返回值可能是null，就必须在类型后面加？
+
+```kotlin
+fun parseInt(str: String): Int? {
+    return str.toIntOrNull() // 可能为null
+}
+```
+
+**字符串操作：**
+
+```kotlin
+fun main() {
+    val str = "Hello World!"
+    for (c in str) {
+        print(" $c")    //  H e l l o   W o r l d !
+    }
+    val upStr = str.uppercase()
+    println(str)	// Hello World! 和Java一样，String是不可变的
+
+    println("Keary $upStr")		// Keary HELLO WORLD! 字符串模板
+}
+```
+
+**kotlin创建数组方式：**
+
+```kotlin
+    // 包装类型
+    val array = Array(3) { i -> (i * i) } // [0,1,4]
+    val arrayOf = arrayOf(1, 2, 3) // [1,2,3]
+    val arrayOf1 = arrayOf("aa", "bb", "cc") // ["aa", "bb", "cc"]
+    val arrayOfNulls = arrayOfNulls<String>(3) // [null,null,null]
+    // 原生类型
+    val intArray = IntArray(5) // [0,0,0,0,0]
+    val intArray1 = IntArray(5) { 22 } // [22,22,22,22,22]
+    val intArray2 = IntArray(5) { it + 2 } // [2,3,4,5,6]
+```
 
 **扩展属性/扩展函数/属性声明新方式：**
 
@@ -315,6 +354,8 @@ var MyClass.stringRepresentation: String
     set(value) {
         println(value.length)
     }
+
+// 扩展函数
 fun MyClass.getName() = "Kotlin"
 
 fun main() {
@@ -333,10 +374,56 @@ fun main() {
 }
 ```
 
-**数据类:** 
+**幕后字段/幕后属性：**在大多数情况下，直接使用公共属性（不带幕后字段）即可满足需求。只有在需要添加自定义逻辑或控制属性访问的特殊情况下，才会选择使用幕后字段和幕后属性
 
 ```kotlin
-// 自动生成equals()、hashCode()和toString()
+// Kitlin会自定为属性生成幕后字段    field表示name的幕后字段
+class Person {
+    var name: String = ""
+        get() = field
+        set(value) {
+            field = value
+        }
+}
+// 通过私有的_name字段来显式定义幕后字段，然后在name属性的访问器中使用该字段
+class Person {
+    private var _name: String = ""
+    var name: String
+        get() = _name
+        set(value) {
+            if (value >= 0) {
+                _name = value
+            }
+        }
+}
+// 场景一：通过幕后字段，在属性访问器中添加自定义逻辑(对写入进行验证、转换)
+// 场景二：封装属性的内部实现细节：幕后字段允许你将属性的实际存储与外部访问分离
+// 场景三：属性计算：属性的值可能需要通过计算得出，而不是简单地存储在幕后字段中
+```
+
+**延迟初始化属性与变量：**通过lateinit关键字，可以延迟初始化属性，允许将非空类型的属性推迟到后面的代码中进行赋值
+
+```kotlin
+// 场景一：当变量的计算代价较高时，你可以使用延迟初始化来推迟计算，直到变量实际被使用。这可以在节省资源的同时提高性能
+val expensiveData: List<String> by lazy {
+    // 执行昂贵的操作来计算数据
+    fetchDataFromNetwork()
+}
+// 场景二：在初始化对象的过程中，如果某些属性或变量依赖于其他对象
+class MyClass {
+    val dependency: MyDependency by lazy {
+        MyDependency()
+    }
+}
+
+val obj = MyClass()
+// 在此之前，MyDependency不会被初始化
+val result = obj.dependency.someFunction()
+```
+
+**数据类:** 自动生成equals()、hashCode()和toString()等函数
+
+```kotlin
 data class Person(val name: String, val age: Int)
 
 fun main() {
@@ -350,7 +437,7 @@ fun main() {
 }
 ```
 
-**密封类:**  受限的类继承结构, 多用于when判断多个实例
+**密封类:**  受限的类继承结构，描述一组相关的类， 多用于when判断多个实例
 
 ```kotlin
 sealed class Result {
@@ -372,10 +459,23 @@ fun main() {
 
 ```
 
-**对象表达式：**
+**内联类：** 有类的感觉，不会有对象的堆内存分配，运行时将内联类替换为包装类型，性能和内存效率方面具有优势
 
 ```kotlin
-// 使用对象表达式，在不创建具体类的情况下，直接创建并使用这个对象
+// UserId是一个内联类，包装了Long类型的值，对单个值进行封装和处理
+inline class UserId(val value: Long)
+
+fun getUserId(userId: UserId): Long {
+    return userId.value
+}
+
+val id: UserId = UserId(123)
+val extractedId: Long = getUserId(id)
+```
+
+**对象表达式：**使用对象表达式，在不创建具体类的情况下，直接创建并使用这个对象
+
+```kotlin
 open class Animal {
     open fun sound() {
         println("Animal makes a sound")
@@ -406,50 +506,20 @@ fun someFunction() {
 }
 ```
 
-**伴生对象：** 一种创建单例对象的方式，单例/初始化
-
-```kotlin
-object MySingleton {
-    fun getInstance() {
-        println("Instance")
-    }
-}
-
-fun main() {
-    MySingleton.getInstance() // Instance
-}
-```
-
-内联类：有类的感觉，不会与对象的堆内存分配，运行时将内联类替换为包装类型，性能和内存效率方面具有优势
-
-```kotlin
-// UserId是一个内联类，包装了Long类型的值，对单个值进行封装和处理
-inline class UserId(val value: Long)
-
-fun getUserId(userId: UserId): Long {
-    return userId.value
-}
-
-val id: UserId = UserId(123)
-val extractedId: Long = getUserId(id)
-
-```
-
-
-
-
-
-在java中静态方法定义很简单，直接在方法添加static修饰符即可；
-
-但是在Kotlin中有两种方式：它这么做就是为了方便，比如定义工具类时就不需要写一堆static
+**伴生对象： ** 在java中静态方法定义很简单，直接在方法添加static修饰符即可；但是在Kotlin中有两种方式：它这么做就是为了方便，比如定义工具类时就不需要写一堆static
 
 - 定义单例类，这样里面所以方法都可以直接用调用静态方法的样子调用
 
   ```kotlin
-  object Util {
-      fun doAction() {
-          println("xxx")
+  object MySingleton {
+      fun getInstance() {
+          println("Instance")
       }
+  }
+  
+  fun main() {
+      MySingleton.getInstance() // Instance
+  } object MySingleton {    fun getInstance() {        println("Instance")    }}fun main() {    MySingleton.getInstance() // Instance}object Util {    fun doAction() {        println("xxx")    }}
   ```
   
 - 定义伴生对象，这样就能在普通类中定义类似静态方法
@@ -460,7 +530,7 @@ val extractedId: Long = getUserId(id)
   		println("xxxx")
   	}
   	companion object {
-          // @JvmStatic    添加这个后这个方法才是这个类的真正静态方法，不添加也能用
+          // @JvmStatic    添加这个后这个方法才是这个类的真正静态方法或字段，不添加也能用
   		fun doAction2() {
   			println("xxxx")
   		}
@@ -468,11 +538,111 @@ val extractedId: Long = getUserId(id)
   }
   ```
 
+**高阶函数与lambda表达式：**像操作变量一样操作函数，将函数作为参数或返回值；提供了更灵活的**函数组合**和**代码复用**方式
 
+```kotlin
+// 场景一：函数参数化，通用的map高阶函数，它接受一个转换函数作为参数，用于将集合中的每个元素进行转换
+fun <T, R> List<T>.map(transform: (T) -> R): List<R> {
+    val result = mutableListOf<R>()
+    for (item in this) {
+        result.add(transform(item))
+    }
+    return result
+}
 
+val numbers = listOf(1, 2, 3, 4, 5)
+val squaredNumbers = numbers.map { it * it }  // 在调用函数操作的同时再执行第二种自定义操作
 
+// 场景二：多个函数组合起来，形成新的函数。这样可以使代码更简洁、更可读，使用compose高阶函数将两个函数组合成一个新的函数
+fun <T, R, V> compose(f: (R) -> V, g: (T) -> R): (T) -> V {
+    return { x -> f(g(x)) }
+}
 
+val addOne: (Int) -> Int = { it + 1 }
+val multiplyByTwo: (Int) -> Int = { it * 2 }
+val addOneAndMultiplyByTwo = compose(multiplyByTwo, addOne)
 
+val result = addOneAndMultiplyByTwo(3) // 输出：8
+
+// 根据不同的条件返回不同的函数。这样可以根据需要动态生成函数,编写一个工厂函数，根据传入的参数返回一个特定的计算函数
+fun createCalculator(operation: String): (Int, Int) -> Int {
+    return when (operation) {
+        "add" -> { a, b -> a + b }
+        "subtract" -> { a, b -> a - b }
+        "multiply" -> { a, b -> a * b }
+        else -> throw IllegalArgumentException("Invalid operation")
+    }
+}
+
+val addFunction = createCalculator("add")
+val result = addFunction(2, 3) // 输出：5
+```
+
+**结构声明：** 将一个复杂的对象或数据结构解构成多个单独的变量
+
+```kotlin
+// 1.解构数据类
+data class Person(val name: String, val age: Int)
+
+val person = Person("John Doe", 30)
+val (name, age) = person
+
+println(name) // 输出："John Doe"
+println(age)  // 输出：30
+
+// 2.解构函数返回值：当函数返回多个值时，可以使用解构声明将这些值解构到多个变量中。这样可以方便地访问函数的返回结果
+fun getUser(): Pair<String, Int> {
+    return Pair("John Doe", 30)
+}
+
+val (name, age) = getUser()
+
+println(name) // 输出："John Doe"
+println(age)  // 输出：30
+
+// 3.解构集合元素：遍历一个包含多个元素的集合时，可以使用解构声明将集合元素解构为单独的变量，以便更方便地访问元素的属性
+val map = mapOf("key1" to "value1", "key2" to "value2")
+
+for ((key, value) in map) {
+    println("Key: $key, Value: $value")
+}
+
+// 4.使用Lambda表达式时，可以使用解构声明将Lambda的参数解构为单独的变量，以便更方便地访问参数
+val list = listOf("Apple", "Banana", "Orange")
+
+list.forEachIndexed { index, element ->
+    println("Index: $index, Element: $element")
+}
+
+// 5.解构声明与when表达式结合使用：当使用when表达式时，可以使用解构声明将不同情况下的匹配结果解构到单独的变量中，
+//   以便在每个分支中方便地访问和处理数据
+fun processResponse(response: ApiResponse) {
+    when (response) {
+        is ApiResponse.Success -> {
+            val (data, statusCode) = response
+            println("Received data: $data, Status code: $statusCode")
+        }
+        is ApiResponse.Error -> {
+            val (errorMessage, statusCode) = response
+            println("Error message: $errorMessage, Status code: $statusCode")
+        }
+    }
+}
+
+// 6.自定义类中实现解构声明，你可以通过在类中定义component1()、component2()等方法来指定如何解构对象
+class Point(val x: Int, val y: Int) {
+    operator fun component1(): Int = x   // Kotlin要求每个类最多只能有五个componentN()方法，分别对应不同的属性
+    operator fun component2(): Int = y   // 使用数据类好点，它会自定生成解构声明的componentN()方法
+}
+
+fun main() {
+    val point = Point(3, 5)
+    val (x, y) = point
+
+    println("x: $x, y: $y")
+}
+
+```
 
 **标准函数：**
 
@@ -483,6 +653,8 @@ val extractedId: Long = getUserId(id)
   //  这里是obj的上下文
   "value" //  with函数的返回值
   }
+  // 技巧1：在with大括号中顺序执行obj的方法
+  // 
   ```
 
 - run    和with差不多，但这个是**直接对对象**进行**lambda操作**，并将最后一行代码作为**返回值**返回
@@ -500,7 +672,7 @@ val extractedId: Long = getUserId(id)
   val result = obj.apply {
   //  这里是obj的上下文
   }
-  //  result == obj
+  //  技巧1：大括号中对obj对象中某些属性进行赋值，最后一个括号后还可以.also{}接着处理这个对象
   ```
 
 - let  在**对象的基础**上对其操作，并把**对象传给lambda**操作，最后返回此对象
@@ -508,6 +680,10 @@ val extractedId: Long = getUserId(id)
   ```kotlin
   obj.let { obj -> // 常
       obj.xxxx
+  }
+  
+  obj？.let { 
+      // 如果obj非空就执行
   }
   ```
 
@@ -519,6 +695,10 @@ val extractedId: Long = getUserId(id)
   var b = 2
   a = b.alse { b = a }
   ```
+
+集合：
+
+协程：
 
 ## Python
 
